@@ -1,0 +1,59 @@
+.vscode
+.DS_Store
+__MACOSX
+
+fever/.DS_Store
+fever/__MACOSX
+fever/__pycache__/
+fever/hpc_outputs
+fever/results
+fever/.ipynb_checkpoints/
+
+fever-baselines/.idea/
+fever-baselines/.DS_Store
+fever-baselines/__pycache__
+fever-baselines/.ipynb_checkpoints/
+fever-baselines/data/
+fever-baselines/features/
+fever-baselines/logs/
+fever-baselines/models/
+
+# Idea
+jack/.idea/
+
+# TensorBoard dirs
+jack/.tb
+
+# Vim buffer files
+jack/*.swp
+
+# Test result files
+jack/testresult_*
+
+# Snippets
+jack/snippets/
+
+# Datasets
+jack/data/WN18/*.tgz
+jack/data/WN18/wordnet-mlj12
+jack/tests/test_results/fastqa_reader_test/
+jack/tests/test_results/dam_reader_test/
+jack/data/GloVe/glove.840B.300d.*
+jack/data/MultiNLI/multinli_1.0/
+
+jack/data/WN18/train.jtr
+jack/data/WN18/valid.jtr
+jack/data/WN18/test.jtr
+jack/data/WN18/wn18*
+
+jack/data/WN18RR/test.jtr
+jack/data/WN18RR/test.txt
+jack/data/WN18RR/train.jtr
+jack/data/WN18RR/train.txt
+jack/data/WN18RR/valid.jtr
+jack/data/WN18RR/valid.txt
+jack/data/WN18RR/wn18.tgz
+
+jack/saved_reader/
+
+jack/tests
