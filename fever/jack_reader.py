@@ -111,6 +111,11 @@ def flatten(bumpy_2d_list):
         flattened.extend(list_)
     return flattened
 
+def reader_forward(reader, inputs):
+    batch = reader.input_module(inputs)
+    output_module_input = reader.model_module(batch, reader.output_module.input_ports)
+    answers = reader.output_module.forward(inputs, {p: output_module_input[p] for p in reader.output_module.input_ports})
+    return answers
 
 def predict(reader, all_settings, batch_size):
     # pointer loops from 0 to less than (or equal to) len(all_settings) with step batch_size
@@ -118,7 +123,7 @@ def predict(reader, all_settings, batch_size):
     for pointer in tqdm(range(0, len(all_settings), batch_size)):
         batch_settings = all_settings[pointer: pointer + batch_size]
         n_settings = [len(settings_) for settings_ in batch_settings]
-        t = reshape(reader(flatten(batch_settings)), n_settings)
+        t = reshape(reader_forward(reader, flatten(batch_settings)), n_settings)
         preds_list.extend(t)
     return preds_list
 
@@ -133,9 +138,6 @@ def save_predictions(instances, preds_list, path, scores_for_all_candidates=True
         if scores_for_all_candidates:
             pred_labels_list = [[pred.text for pred in preds_instance]for preds_instance in preds]
             scores = [[float(pred.score) for pred in preds_instance] for preds_instance in preds]
-            for preds_instance in preds:
-                for pred in preds_instance:
-                    print(pred.score)
         else:
             pred_labels = [pred[0].text for pred in preds]
             scores = [float(pred[0].score) for pred in preds]

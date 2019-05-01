@@ -112,6 +112,8 @@ class ESIM(nn.Module):
             probabilities: A tensor of size (batch, num_classes) containing
                 the probabilities of each output class in the model.
         """
+        print(premises.size(), hypotheses.size())
+        print(self._encoding._encoder.input_size, self._encoding._encoder.hidden_size)
         if (is_eval and self.training) or ((not is_eval) and (not self.training)):
             if is_eval: self.eval() 
             else: self.train()

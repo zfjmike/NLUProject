@@ -9,4 +9,4 @@ learning_rate: 0.0004
 learning_rate_decay: 0.9
 batch_size: 32
 epochs: 5
-reader: 'pytorch_esim_reader'
+reader: 'pytorch_esim_elmo_reader'

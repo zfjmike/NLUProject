@@ -122,10 +122,22 @@ def fastqa_reader_torch(resources_or_conf: Union[dict, SharedResources] = None):
 
 
 # Natural Language Inference
-def _pytorch_nli_reader(model_module_constructor, resources_or_conf: Union[dict, SharedResources] = None):
+def _pytorch_nli_elmo_reader(model_module_constructor, resources_or_conf: Union[dict, SharedResources] = None):
+    from jack.readers.classification.elmo_embedding import ELMoEmbeddingInputModule
+    from jack.readers.classification.shared import SimpleClassificationOutputModule
+    shared_resources = create_shared_resources(resources_or_conf)
+    shared_resources.embedding_dim = 1024
+    input_module = ELMoEmbeddingInputModule(resources_or_conf)
+    model_module = model_module_constructor(shared_resources)
+    output_module = SimpleClassificationOutputModule(shared_resources)
+    return PyTorchReader(shared_resources, input_module, model_module, output_module)
+
+
+def _pytorch_nli_glove_reader(model_module_constructor, resources_or_conf: Union[dict, SharedResources] = None):
     from jack.readers.classification.shared import ClassificationSingleSupportInputModule
     from jack.readers.classification.shared import SimpleClassificationOutputModule
     shared_resources = create_shared_resources(resources_or_conf)
+    shared_resources.embedding_dim = 300
     input_module = ClassificationSingleSupportInputModule(resources_or_conf)
     model_module = model_module_constructor(shared_resources)
     output_module = SimpleClassificationOutputModule(shared_resources)
@@ -142,9 +154,14 @@ def _tf_nli_reader(model_module_constructor, resources_or_conf: Union[dict, Shar
     return TFReader(shared_resources, input_module, model_module, output_module)
 
 @nli_reader
-def pytorch_modular_nli_reader(resources_or_conf: Union[dict, SharedResources] = None):
+def pytorch_esim_reader(resources_or_conf: Union[dict, SharedResources] = None):
     from jack.readers.natural_language_inference.pytorch_nli_model import PyTorchModularNLIModel
-    return _pytorch_nli_reader(PyTorchModularNLIModel, resources_or_conf)
+    return _pytorch_nli_glove_reader(PyTorchModularNLIModel, resources_or_conf)
+
+@nli_reader
+def pytorch_esim_elmo_reader(resources_or_conf: Union[dict, SharedResources] = None):
+    from jack.readers.natural_language_inference.pytorch_nli_model import PyTorchModularNLIModel
+    return _pytorch_nli_elmo_reader(PyTorchModularNLIModel, resources_or_conf)
 
 
 @nli_reader

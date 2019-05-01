@@ -270,3 +270,18 @@ class SimpleClassificationOutputModule(OutputModule):
                 ans = Answer(question.candidates[winning_index], score=score)
             result.append([ans])
         return result
+
+    def forward(self, questions: List[QASetting], tensors: Mapping[TensorPort, np.ndarray]) -> List[Answer]:
+        logits = tensors[Ports.Prediction.logits]
+        result = []
+        for index_in_batch, question in enumerate(questions):
+            score = _np_softmax(logits[index_in_batch])
+            ans = []
+            for i in range(score.shape[0]):
+                if self._shared_resources is not None and hasattr(self._shared_resources, 'answer_vocab'):
+                    ans.append(Answer(self._shared_resources.answer_vocab.get_sym(i), score=score[i]))
+                else:
+                    ans.append(question.candidates[i], score=score[i])
+            result.append(ans)
+        return result
+                
