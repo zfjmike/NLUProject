@@ -126,7 +126,7 @@ def _pytorch_nli_elmo_reader(model_module_constructor, resources_or_conf: Union[
     from jack.readers.classification.elmo_embedding import ELMoEmbeddingInputModule
     from jack.readers.classification.shared import SimpleClassificationOutputModule
     shared_resources = create_shared_resources(resources_or_conf)
-    shared_resources.embedding_dim = 1024
+    shared_resources.config.embedding_dim = 1024
     input_module = ELMoEmbeddingInputModule(resources_or_conf)
     model_module = model_module_constructor(shared_resources)
     output_module = SimpleClassificationOutputModule(shared_resources)

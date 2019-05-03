@@ -103,6 +103,8 @@ def inference_rte(config):
         options.append("--prependtitle")
     if config["n_sentences"]:
         options.extend(["--n_sentences", str(config["n_sentences"])])
+    if config["batch_size"]:
+        options.extend(["--batch_size", str(config["batch_size"])])
 
     # train data
     if not os.path.exists(config["train_predicted_labels_and_scores_file"]):

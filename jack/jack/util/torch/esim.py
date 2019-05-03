@@ -4,7 +4,7 @@ import torch.nn as nn
 from jack.util.torch.esim_util import replace_masked, get_mask
 from jack.util.torch.seq_encoder import Seq2SeqEncoder
 from jack.util.torch.rnn_dropout import RNNDropout
-from jack.util.torch.attention import SoftmaxAttention
+from jack.util.torch.attention import SoftmaxAttention, SelfAttention
 
 class ESIM(nn.Module):
     """
@@ -20,6 +20,7 @@ class ESIM(nn.Module):
                  padding_idx=0,
                  dropout=0.5,
                  num_classes=3, # Supported / Refuted / NotEnoughInformation
+                 self_attention=False,
                  device="cuda"):
         """
         Args:
@@ -47,6 +48,7 @@ class ESIM(nn.Module):
         self.num_classes = num_classes
         self.dropout = dropout
         self.device = device
+        self.self_attention = self_attention
 
         # TODO: replace with BERT
         # self._word_embedding = nn.Embedding(self.vocab_size,
@@ -62,6 +64,11 @@ class ESIM(nn.Module):
                                         self.embedding_dim,
                                         self.hidden_size,
                                         bidirectional=True)
+
+        if self_attention:
+            self._premises_self_attention = SelfAttention()
+            self._hypotheses_self_attention = SelfAttention()
+            print("==== Self Attention is used ====")
 
         self._attention = SoftmaxAttention()
 
@@ -135,6 +142,10 @@ class ESIM(nn.Module):
         encoded_hypotheses = self._encoding(embedded_hypotheses,
                                             hypotheses_lengths)
 
+        if self.self_attention:
+            encoded_premises = self._premises_self_attention(encoded_premises)
+            encoded_hypotheses = self._hypotheses_self_attention(encoded_hypotheses)
+        
         # print(encoded_premises.size(), premises_mask.size(), encoded_hypotheses.size(), hypotheses_mask.size())
         attended_premises, attended_hypotheses =\
             self._attention(encoded_premises, premises_mask,

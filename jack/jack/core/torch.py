@@ -41,7 +41,10 @@ class PyTorchModelModule(ModelModule):
         """
         goal_ports = goal_ports or self.output_ports
         inputs = [p.create_torch_variable(batch.get(p), gpu=torch.cuda.device_count() > 0) for p in self.input_ports]
-        outputs = self._prediction_module(*inputs)
+        self._prediction_module.eval()
+        with torch.no_grad():
+            outputs = self._prediction_module(*inputs)
+        self._prediction_module.train()
         ret = {p: p.torch_to_numpy(t) for p, t in zip(self.output_ports, outputs) if p in goal_ports}
         for p in goal_ports:
             if p not in ret and p in batch:
@@ -82,6 +85,7 @@ class PyTorchModelModule(ModelModule):
         if torch.cuda.device_count() > 0:
             self._prediction_module.cuda()
             self._loss_module.cuda()
+        self._prediction_module.train()
 
     def store(self, path):
         with open(path, 'wb') as f:

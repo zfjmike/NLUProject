@@ -9,7 +9,7 @@
       "___score___": "___model_name___",
       "___reader___": "reader",
       "___rerank___": "___model_name___",
-      "___model_name___": "pytorch_esim_elmo"
+      "___model_name___": "pytorch_esimsa_elmo"
     },
     "ir": {
       "train_output_file": "___root_dir___/fever/data/indexed_data/train+dev+test.ver0727.p15.s30.jsonl",
@@ -24,7 +24,7 @@
       "dev_converted_file": "___root_dir___/fever/data/converted/test.ver0727.p15.s30_title.jsonl"
     },
     "train_rte": {
-      "jack_config_file": "___root_dir___/jack/conf/nli/fever/pytorch_esim_elmo.yaml",
+      "jack_config_file": "___root_dir___/jack/conf/nli/fever/___model_name___.yaml",
       "load_dir": "esim_snli",
       "save_dir": "___root_dir___/fever/results/___train_rte___/___reader___",
       "train_file": {

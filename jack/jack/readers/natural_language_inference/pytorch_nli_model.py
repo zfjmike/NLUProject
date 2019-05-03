@@ -45,9 +45,12 @@ class PyTorchModularNLIModel(PyTorchModelModule):
         return [Ports.loss]
 
     def create_prediction_module(self, shared_resources: SharedResources) -> nn.Module:
-        prediction_module = ESIM(embedding_dim=shared_resources.embedding_dim)
+        prediction_module = ESIM(
+            embedding_dim=shared_resources.config.get('embedding_dim', 300),
+            self_attention=shared_resources.config.get('self_attention', False),
+        )
         print('Prediction module:', prediction_module)
-        return ESIM()
+        return prediction_module
     
     def create_loss_module(self, shared_resources: SharedResources) -> nn.Module:
         loss = nn.CrossEntropyLoss()
