@@ -221,6 +221,10 @@ class ClassificationSingleSupportInputModule(OnlineInputModule[MCAnnotation]):
             Ports.Input.question: [a.question_ids for a in annotations]
         }
 
+        if self.config["use_dep_sa"]:
+            xy_dict[Ports.Input.question_tokens] = [a.question_tokens for a in annotations]
+            xy_dict[Ports.Input.support_tokens] = [a.support_tokens for a in annotations]
+
         if self.embeddings is not None:
             emb_support = np.zeros([len(annotations), max(s_lengths), self.embeddings.shape[-1]])
             emb_question = np.zeros([len(annotations), max(q_lengths), self.embeddings.shape[-1]])

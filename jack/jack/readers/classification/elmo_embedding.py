@@ -1,5 +1,3 @@
-from allennlp.modules.elmo import Elmo, batch_to_ids
-
 from typing import NamedTuple, List, Optional, Iterable, Tuple, Mapping
 import random
 import numpy as np
@@ -13,6 +11,8 @@ from jack.readers.classification import util
 from jack.util import preprocessing
 from jack.util.map import numpify
 
+from allennlp.modules.elmo import Elmo, batch_to_ids
+
 MCAnnotation = NamedTuple('MCAnnotation', [
     ('question_tokens', List[str]),
     ('question_ids', List[int]),
@@ -24,11 +24,11 @@ MCAnnotation = NamedTuple('MCAnnotation', [
     ('id', Optional[int]),
 ])
 
-# Original ELMo
+# Original ELMo options & weight
 # options_file = "https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x4096_512_2048cnn_2xhighway/elmo_2x4096_512_2048cnn_2xhighway_options.json"
 # weight_file = "https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x4096_512_2048cnn_2xhighway/elmo_2x4096_512_2048cnn_2xhighway_weights.hdf5"
 
-# Small ELMo
+# Small ELMo options & weight
 options_file = "https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x1024_128_2048cnn_1xhighway/elmo_2x1024_128_2048cnn_1xhighway_options.json"
 weight_file = "https://s3-us-west-2.amazonaws.com/allennlp/models/elmo/2x1024_128_2048cnn_1xhighway/elmo_2x1024_128_2048cnn_1xhighway_weights.hdf5"
 

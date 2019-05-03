@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 from jack.core import *
 from jack.core.torch import PyTorchModelModule
-from jack.util.torch.esim import ESIM
+from jack.util.torch.esim import ESIM, DepSAESIM
 
 class PyTorchModularNLIModel(PyTorchModelModule):
     def __init__(self, shared_resources):
@@ -17,15 +17,23 @@ class PyTorchModularNLIModel(PyTorchModelModule):
     @property
     def input_ports(self) -> List[TensorPort]:
         if self.shared_resources.embeddings is not None:
-            return [Ports.Input.emb_support, Ports.Input.emb_question,
-                    # Ports.Input.support, Ports.Input.question,
-                    Ports.Input.support_length, Ports.Input.question_length,
-                    # character information
-                    # Ports.Input.word_chars, Ports.Input.word_char_length,
-                    # Ports.Input.question_batch_words, Ports.Input.support_batch_words,
-                    Ports.is_eval]
+            if self.config.get("use_dep_sa", False):
+                return [Ports.Input.emb_support, 
+                        Ports.Input.support_tokens,
+                        Ports.Input.support_length,
+                        Ports.Input.emb_question,
+                        Ports.Input.question_tokens,
+                        Ports.Input.question_length,
+                        Ports.is_eval]
+            else:
+                return [Ports.Input.emb_support, 
+                        Ports.Input.support_length,
+                        Ports.Input.emb_question,
+                        Ports.Input.question_length,
+                        Ports.is_eval]
         else:
-            return [Ports.Input.support, Ports.Input.question,
+            return [Ports.Input.support, 
+                    Ports.Input.question,
                     Ports.Input.support_length, Ports.Input.question_length,
                     # character information
                     # Ports.Input.word_chars, Ports.Input.word_char_length,
@@ -45,10 +53,15 @@ class PyTorchModularNLIModel(PyTorchModelModule):
         return [Ports.loss]
 
     def create_prediction_module(self, shared_resources: SharedResources) -> nn.Module:
-        prediction_module = ESIM(
-            embedding_dim=shared_resources.config.get('embedding_dim', 300),
-            self_attention=shared_resources.config.get('self_attention', False),
-        )
+        if shared_resources.config.get('use_dep_sa', False):
+            prediction_module = DepSAESIM(
+                embedding_dim=shared_resources.config.get('embedding_dim', 300),
+            )
+        else:
+            prediction_module = ESIM(
+                embedding_dim=shared_resources.config.get('embedding_dim', 300),
+                self_attention=shared_resources.config.get('self_attention', False),
+            )
         print('Prediction module:', prediction_module)
         return prediction_module
     

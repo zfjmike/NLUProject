@@ -151,6 +151,15 @@ class TensorPortWithDefault(TensorPort):
         return super(TensorPortWithDefault, self).create_torch_variable(value, gpu)
 
 
+class TensorPortTokens(TensorPort):
+    
+    def create_tf_placeholder(self):
+        raise ValueError("Tokens cannot be converted into place holder")
+    
+    def create_torch_variable(self, value, gpu=False):
+        return value
+
+
 class Ports:
     """Defines sopme common ports for reusability and as examples. Readers can of course define their own.
 
@@ -172,10 +181,18 @@ class Ports:
         question = TensorPort(np.int32, [None, None], "question",
                               "Represents questions using symbol vectors",
                               "[batch_size, max_num_question_tokens]")
+        
+        question_tokens = TensorPortTokens(np.int, [None, None], "tokens of question",
+                                "Tokens of question batch",
+                                "[batch_size, seq_len]")
 
         support = TensorPort(np.int32, [None, None], "support",
                              "Represents instances with single support documents",
                              "[batch_size, max_num_tokens]")
+        
+        support_tokens = TensorPortTokens(np.int, [None, None], "tokens of support",
+                                "Tokens of support batch",
+                                "[batch_size, seq_len]")
 
         multiple_support = TensorPort(np.int32, [None, None, None], "multiple_support",
                                       ("Represents instances with multiple support documents",

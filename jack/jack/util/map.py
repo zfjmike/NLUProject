@@ -5,6 +5,8 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
+from jack.core import TensorPortTokens
+
 
 def get_list_shape(xs):
     if isinstance(xs, int):
@@ -32,6 +34,8 @@ def numpify(xs, pad=0, keys=None, dtypes=None):
 
     for i, (key, x) in enumerate(xs_iter):
         try:
+            if isinstance(key, TensorPortTokens):
+                xs_np[key] = x
             if (keys is None or key in keys) and not isinstance(x, np.ndarray):
                 shape = get_list_shape(x)
                 dtype = dtypes[i] if dtypes is not None else np.int64
