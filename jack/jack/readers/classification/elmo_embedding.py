@@ -89,7 +89,7 @@ class ELMoEmbeddingInputModule(OnlineInputModule[MCAnnotation]):
                         continue
                     setting.q_dep_i[idx] = int(d[0].index) - 1
                     setting.q_dep_j[idx] = int(d[2].index) - 1
-                    setting.q_dep_type[idx] = type2id(d[1])
+                    setting.q_dep_type[idx] = type2id.unit2id(d[1])
                 
                 setting.s_dep_i = [None] * (len(setting.s_tokenized))
                 setting.s_dep_j = [None] * (len(setting.s_tokenized))
@@ -99,7 +99,7 @@ class ELMoEmbeddingInputModule(OnlineInputModule[MCAnnotation]):
                         continue
                     setting.s_dep_i[idx] = int(d[0].index) - 1
                     setting.s_dep_j[idx] = int(d[2].index) - 1
-                    setting.s_dep_type[idx] = type2id(d[1])
+                    setting.s_dep_type[idx] = type2id.unit2id(d[1])
         
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
