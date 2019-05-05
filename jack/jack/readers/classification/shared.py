@@ -12,9 +12,11 @@ from jack.util.map import numpify
 import stanfordnlp
 from tqdm import tqdm
 import sys
+import re
 
 logger = logging.getLogger(__name__)
 
+pattern = re.compile('\w+|[^\w\s]')
 
 class AbstractSingleSupportClassificationModel(TFModelModule):
     def __init__(self, shared_resources):
@@ -139,7 +141,7 @@ class ClassificationSingleSupportInputModule(OnlineInputModule[MCAnnotation]):
                 # Preprocess dependency info
         if self.shared_resources.config.get("use_dep_sa", False):
             print("Process dependency information...", file=sys.stderr)
-            nlp = stanfordnlp.Pipeline()
+            nlp = stanfordnlp.Pipeline(tokenize_pretokenized=True)
             type2id = nlp.processors['depparse'].trainer.vocab['deprel']
 
             for i in tqdm(range(len(data))):
@@ -147,30 +149,37 @@ class ClassificationSingleSupportInputModule(OnlineInputModule[MCAnnotation]):
                 question = setting.question
                 support = setting.support[0]
 
-                doc = nlp(question + support)
+                question = ' '.join(pattern.findall(question))
+                support = ' '.join(pattern.findall(support))
+
+                doc = nlp(question + '\n' + support)
 
                 setting.q_tokenized = [w.text for w in doc.sentences[0].words]
                 setting.s_tokenized = [w.text for w in doc.sentences[1].words]
 
-                setting.q_dep_i = [None] * (len(setting.q_tokenized))
-                setting.q_dep_j = [None] * (len(setting.q_tokenized))
-                setting.q_dep_type = [None] * (len(setting.q_tokenized))
-                for idx, d in enumerate(doc.sentences[0].dependencies):
+                setting.q_dep_i = [None] * (len(setting.q_tokenized) - 1)
+                setting.q_dep_j = [None] * (len(setting.q_tokenized) - 1)
+                setting.q_dep_type = [None] * (len(setting.q_tokenized) - 1)
+                idx = 0
+                for d in doc.sentences[0].dependencies:
                     if d[1] == 'root':
                         continue
                     setting.q_dep_i[idx] = int(d[0].index) - 1
                     setting.q_dep_j[idx] = int(d[2].index) - 1
                     setting.q_dep_type[idx] = type2id.unit2id(d[1])
+                    idx += 1
                 
-                setting.s_dep_i = [None] * (len(setting.s_tokenized))
-                setting.s_dep_j = [None] * (len(setting.s_tokenized))
-                setting.s_dep_type = [None] * (len(setting.s_tokenized))
-                for idx, d in enumerate(doc.sentences[1].dependencies):
+                setting.s_dep_i = [None] * (len(setting.s_tokenized) - 1)
+                setting.s_dep_j = [None] * (len(setting.s_tokenized) - 1)
+                setting.s_dep_type = [None] * (len(setting.s_tokenized) - 1)
+                idx = 0
+                for d in doc.sentences[1].dependencies:
                     if d[1] == 'root':
                         continue
                     setting.s_dep_i[idx] = int(d[0].index) - 1
                     setting.s_dep_j[idx] = int(d[2].index) - 1
                     setting.s_dep_type[idx] = type2id.unit2id(d[1])
+                    idx += 1
         
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()

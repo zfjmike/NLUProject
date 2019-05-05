@@ -81,9 +81,9 @@ class ELMoEmbeddingInputModule(OnlineInputModule[MCAnnotation]):
                 setting.q_tokenized = [w.text for w in doc.sentences[0].words]
                 setting.s_tokenized = [w.text for w in doc.sentences[1].words]
 
-                setting.q_dep_i = [None] * (len(setting.q_tokenized))
-                setting.q_dep_j = [None] * (len(setting.q_tokenized))
-                setting.q_dep_type = [None] * (len(setting.q_tokenized))
+                setting.q_dep_i = [None] * (len(setting.q_tokenized) - 1)
+                setting.q_dep_j = [None] * (len(setting.q_tokenized) - 1)
+                setting.q_dep_type = [None] * (len(setting.q_tokenized) - 1)
                 for idx, d in enumerate(doc.sentences[0].dependencies):
                     if d[1] == 'root':
                         continue
@@ -91,9 +91,9 @@ class ELMoEmbeddingInputModule(OnlineInputModule[MCAnnotation]):
                     setting.q_dep_j[idx] = int(d[2].index) - 1
                     setting.q_dep_type[idx] = type2id.unit2id(d[1])
                 
-                setting.s_dep_i = [None] * (len(setting.s_tokenized))
-                setting.s_dep_j = [None] * (len(setting.s_tokenized))
-                setting.s_dep_type = [None] * (len(setting.s_tokenized))
+                setting.s_dep_i = [None] * (len(setting.s_tokenized) - 1)
+                setting.s_dep_j = [None] * (len(setting.s_tokenized) - 1)
+                setting.s_dep_type = [None] * (len(setting.s_tokenized) - 1)
                 for idx, d in enumerate(doc.sentences[1].dependencies):
                     if d[1] == 'root':
                         continue
