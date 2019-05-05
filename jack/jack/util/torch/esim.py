@@ -278,6 +278,7 @@ class DepSAESIM(nn.Module):
 
         self._premises_self_attention = SelfAttention()
         self._hypotheses_self_attention = SelfAttention()
+
         print("==== Self Attention is used ====")
         self._dep_generator = DependencyGenerator(
                                 use_gpu=(device == 'cuda' or device == 'gpu'))
@@ -308,11 +309,15 @@ class DepSAESIM(nn.Module):
 
     def forward(self,
                 premises,
-                premises_tokens,
                 premises_lengths,
+                premises_dep_i,
+                premises_dep_j,
+                premises_dep_type,
                 hypotheses,
-                hypotheses_tokens,
                 hypotheses_lengths,
+                hypotheses_dep_i,
+                hypotheses_dep_j,
+                hypotheses_dep_type,
                 is_eval):
         """
         Args:
@@ -347,8 +352,10 @@ class DepSAESIM(nn.Module):
         embedded_premises = premises
         embedded_hypotheses = hypotheses
 
-        premises_dep_mask = self._dep_generator(premises_tokens, premises.size(1))
-        hypotheses_dep_mask = self._dep_generator(hypotheses_tokens, hypotheses.size(1))
+        premises_dep_mask = self._dep_generator(premises_dep_i, premises_dep_j, 
+                                    premises_dep_type, premises.size(1))
+        hypotheses_dep_mask = self._dep_generator(hypotheses_dep_i, hypotheses_dep_j,
+                                    hypotheses_dep_type, hypotheses.size(1))
 
         if self.dropout:
             embedded_premises = self._rnn_dropout(embedded_premises)
@@ -359,11 +366,10 @@ class DepSAESIM(nn.Module):
         encoded_hypotheses = self._encoding(embedded_hypotheses,
                                             hypotheses_lengths)
 
-        if self.self_attention:
-            encoded_premises = self._premises_self_attention(
-                                encoded_premises, premises_mask, premises_dep_mask)
-            encoded_hypotheses = self._hypotheses_self_attention(
-                                encoded_hypotheses, hypotheses_mask, hypotheses_dep_mask)
+        encoded_premises = self._premises_self_attention(
+                            encoded_premises, premises_mask, premises_dep_mask)
+        encoded_hypotheses = self._hypotheses_self_attention(
+                            encoded_hypotheses, hypotheses_mask, hypotheses_dep_mask)
         
         # print(encoded_premises.size(), premises_mask.size(), encoded_hypotheses.size(), hypotheses_mask.size())
         attended_premises, attended_hypotheses =\

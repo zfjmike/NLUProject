@@ -19,11 +19,15 @@ class PyTorchModularNLIModel(PyTorchModelModule):
         if self.shared_resources.embeddings is not None:
             if self.config.get("use_dep_sa", False):
                 return [Ports.Input.emb_support, 
-                        Ports.Input.support_tokens,
                         Ports.Input.support_length,
+                        Ports.Input.support_dep_i,
+                        Ports.Input.support_dep_j,
+                        Ports.Input.support_dep_type,
                         Ports.Input.emb_question,
-                        Ports.Input.question_tokens,
                         Ports.Input.question_length,
+                        Ports.Input.question_dep_i,
+                        Ports.Input.question_dep_j,
+                        Ports.Input.question_dep_type,
                         Ports.is_eval]
             else:
                 return [Ports.Input.emb_support, 

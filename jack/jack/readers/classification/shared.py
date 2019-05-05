@@ -9,6 +9,9 @@ from jack.readers.classification import util
 from jack.util import preprocessing
 from jack.util.map import numpify
 
+import stanfordnlp
+from tqdm import tqdm
+
 logger = logging.getLogger(__name__)
 
 
@@ -132,6 +135,45 @@ class ClassificationSingleSupportInputModule(OnlineInputModule[MCAnnotation]):
             self.shared_resources.answer_vocab.freeze()
         self.shared_resources.char_vocab = preprocessing.char_vocab_from_vocab(self.shared_resources.vocab)
 
+                # Preprocess dependency info
+        if self.shared_resources.config.get("use_dep_sa", False):
+            print("Process dependency information...", file=sys.stderr)
+            nlp = stanfordnlp.Pipeline()
+            type2id = nlp.processors['depparse'].trainer.vocab['deprel']
+
+            for i in tqdm(range(len(data))):
+                setting, _ = data[i]
+                question = setting.question
+                support = setting.support[0]
+
+                doc = nlp(question + support)
+
+                setting.q_tokenized = [w.text for w in doc.sentences[0].words]
+                setting.s_tokenized = [w.text for w in doc.sentences[1].words]
+
+                setting.q_dep_i = [None] * (len(setting.q_tokenized))
+                setting.q_dep_j = [None] * (len(setting.q_tokenized))
+                setting.q_dep_type = [None] * (len(setting.q_tokenized))
+                for idx, d in enumerate(doc.sentences[0].dependencies):
+                    if d[1] == 'root':
+                        continue
+                    setting.q_dep_i[idx] = int(d[0].index) - 1
+                    setting.q_dep_j[idx] = int(d[2].index) - 1
+                    setting.q_dep_type[idx] = type2id(d[1])
+                
+                setting.s_dep_i = [None] * (len(setting.s_tokenized))
+                setting.s_dep_j = [None] * (len(setting.s_tokenized))
+                setting.s_dep_type = [None] * (len(setting.s_tokenized))
+                for idx, d in enumerate(doc.sentences[1].dependencies):
+                    if d[1] == 'root':
+                        continue
+                    setting.s_dep_i[idx] = int(d[0].index) - 1
+                    setting.s_dep_j[idx] = int(d[2].index) - 1
+                    setting.s_dep_type[idx] = type2id(d[1])
+        
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+
     @property
     def training_ports(self) -> List[TensorPort]:
         return [Ports.Target.target_index]
@@ -140,14 +182,27 @@ class ClassificationSingleSupportInputModule(OnlineInputModule[MCAnnotation]):
     def output_ports(self) -> List[TensorPort]:
         """Defines the outputs of the InputModule"""
         if self.shared_resources.embeddings is not None:
-            return [Ports.Input.emb_support, Ports.Input.emb_question,
-                    Ports.Input.support, Ports.Input.question,
-                    Ports.Input.support_length, Ports.Input.question_length,
-                    Ports.Input.sample_id,
-                    # character information
-                    Ports.Input.word_chars, Ports.Input.word_char_length,
-                    Ports.Input.question_batch_words, Ports.Input.support_batch_words,
-                    Ports.is_eval]
+            if self.shared_resources.config.get("use_dep_sa", False):
+                return [Ports.Input.emb_support, 
+                        Ports.Input.support_length,
+                        Ports.Input.support_dep_i,
+                        Ports.Input.support_dep_j,
+                        Ports.Input.support_dep_type,
+                        Ports.Input.emb_question,
+                        Ports.Input.question_length,
+                        Ports.Input.question_dep_i,
+                        Ports.Input.question_dep_j,
+                        Ports.Input.question_dep_type,
+                        Ports.is_eval]
+            else:
+                return [Ports.Input.emb_support, Ports.Input.emb_question,
+                        Ports.Input.support, Ports.Input.question,
+                        Ports.Input.support_length, Ports.Input.question_length,
+                        Ports.Input.sample_id,
+                        # character information
+                        Ports.Input.word_chars, Ports.Input.word_char_length,
+                        Ports.Input.question_batch_words, Ports.Input.support_batch_words,
+                        Ports.is_eval]
         else:
             return [Ports.Input.support, Ports.Input.question,
                     Ports.Input.support_length, Ports.Input.question_length,
@@ -179,23 +234,42 @@ class ClassificationSingleSupportInputModule(OnlineInputModule[MCAnnotation]):
                             answers: Optional[List[Answer]] = None) -> MCAnnotation:
         has_answers = answers is not None
 
-        q_tokenized, q_ids, q_length, _, _ = preprocessing.nlp_preprocess(
-            question.question, self.shared_resources.vocab,
-            lowercase=self.shared_resources.config.get('lowercase', True))
-        s_tokenized, s_ids, s_length, _, _ = preprocessing.nlp_preprocess(
-            question.support[0], self.shared_resources.vocab,
-            lowercase=self.shared_resources.config.get('lowercase', True))
+        if self.shared_resources.config.get("use_dep_sa", False):
+            anno = MCAnnotation(
+                question_tokens = question.q_tokenized,
+                question_ids = None,
+                question_length = len(question.q_tokenized),
+                support_tokens = question.s_tokenized,
+                support_ids = None,
+                support_length = len(question.s_tokenized),
+                answer = self.shared_resources.answer_vocab(answers[0].text) if has_answers else 0,
+                id = idd
+            )
+            anno.question_dep_i = question.q_dep_i
+            anno.question_dep_j = question.q_dep_j
+            anno.question_dep_type = question.q_dep_type
+            anno.support_dep_i = question.s_dep_i
+            anno.support_dep_j = question.s_dep_j
+            anno.support_dep_type = question.s_dep_type
+            return anno
+        else:
+            q_tokenized, q_ids, q_length, _, _ = preprocessing.nlp_preprocess(
+                question.question, self.shared_resources.vocab,
+                lowercase=self.shared_resources.config.get('lowercase', True))
+            s_tokenized, s_ids, s_length, _, _ = preprocessing.nlp_preprocess(
+                question.support[0], self.shared_resources.vocab,
+                lowercase=self.shared_resources.config.get('lowercase', True))
 
-        return MCAnnotation(
-            question_tokens=q_tokenized,
-            question_ids=q_ids,
-            question_length=q_length,
-            support_tokens=s_tokenized,
-            support_ids=s_ids,
-            support_length=s_length,
-            answer=self.shared_resources.answer_vocab(answers[0].text) if has_answers else 0,
-            id=idd
-        )
+            return MCAnnotation(
+                question_tokens=q_tokenized,
+                question_ids=q_ids,
+                question_length=q_length,
+                support_tokens=s_tokenized,
+                support_ids=s_ids,
+                support_length=s_length,
+                answer=self.shared_resources.answer_vocab(answers[0].text) if has_answers else 0,
+                id=idd
+            )
 
     def create_batch(self, annotations: List[MCAnnotation],
                      is_eval: bool, with_answers: bool) -> Mapping[TensorPort, np.ndarray]:
@@ -208,22 +282,31 @@ class ClassificationSingleSupportInputModule(OnlineInputModule[MCAnnotation]):
 
         q_lengths = [a.question_length for a in annotations]
         s_lengths = [a.support_length for a in annotations]
-        xy_dict = {
-            Ports.Input.question_length: q_lengths,
-            Ports.Input.support_length: s_lengths,
-            Ports.Input.sample_id: [a.id for a in annotations],
-            Ports.Input.word_chars: word_chars,
-            Ports.Input.word_char_length: word_lengths,
-            Ports.Input.question_batch_words: question_words,
-            Ports.Input.support_batch_words: support_words,
-            Ports.is_eval: is_eval,
-            Ports.Input.support: [a.support_ids for a in annotations],
-            Ports.Input.question: [a.question_ids for a in annotations]
-        }
-
-        if self.config["use_dep_sa"]:
-            xy_dict[Ports.Input.question_tokens] = [a.question_tokens for a in annotations]
-            xy_dict[Ports.Input.support_tokens] = [a.support_tokens for a in annotations]
+        if self.shared_resources.config.get('use_dep_sa', False):
+            xy_dict = {
+                Ports.Input.support_length: s_lengths,
+                Ports.Input.support_dep_i: [a.support_dep_i for a in annotations],
+                Ports.Input.support_dep_j: [a.support_dep_j for a in annotations],
+                Ports.Input.support_dep_type: [a.support_dep_type for a in annotations],
+                Ports.Input.question_length: q_lengths,
+                Ports.Input.question_dep_i: [a.question_dep_i for a in annotations],
+                Ports.Input.question_dep_j: [a.question_dep_j for a in annotations],
+                Ports.Input.question_dep_type: [a.question_dep_type for a in annotations],
+                Ports.is_eval: is_eval
+            }
+        else:
+            xy_dict = {
+                Ports.Input.question_length: q_lengths,
+                Ports.Input.support_length: s_lengths,
+                Ports.Input.sample_id: [a.id for a in annotations],
+                Ports.Input.word_chars: word_chars,
+                Ports.Input.word_char_length: word_lengths,
+                Ports.Input.question_batch_words: question_words,
+                Ports.Input.support_batch_words: support_words,
+                Ports.is_eval: is_eval,
+                Ports.Input.support: [a.support_ids for a in annotations],
+                Ports.Input.question: [a.question_ids for a in annotations]
+            }
 
         if self.embeddings is not None:
             emb_support = np.zeros([len(annotations), max(s_lengths), self.embeddings.shape[-1]])
@@ -239,7 +322,9 @@ class ClassificationSingleSupportInputModule(OnlineInputModule[MCAnnotation]):
 
         if with_answers:
             xy_dict[Ports.Target.target_index] = [a.answer for a in annotations]
-        return numpify(xy_dict)
+        xy_dict = numpify(xy_dict)
+
+        return xy_dict
 
 
 def _np_softmax(x):

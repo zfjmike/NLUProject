@@ -98,9 +98,10 @@ class SelfAttention(nn.Module):
                                                               .contiguous())
 
         # Softmax attention weights.
-        prem_hyp_attn = masked_softmax(similarity_matrix, premise_mask)
         if premise_dep_mask is not None:
-            prem_hyp_attn = prem_hyp_attn * premise_dep_mask
+            similarity_matrix = similarity_matrix * premise_dep_mask
+
+        prem_hyp_attn = masked_softmax(similarity_matrix, premise_mask)
 
         # Weighted sums of the hypotheses for the the premises attention,
         # and vice-versa for the attention of the hypotheses.

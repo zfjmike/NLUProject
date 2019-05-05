@@ -10,7 +10,6 @@ from sklearn.metrics import pairwise_distances
 
 from jack.util.vocab import Vocab
 
-
 def fill_vocab(qa_settings, vocab=None, lowercase=False, lemmatize=False, spacy_nlp=False):
     vocab = vocab or Vocab(unk=None)
     assert not vocab._frozen, 'Filling frozen vocabs does not make a lot fo sense...'
@@ -116,7 +115,6 @@ def nlp_preprocess(text: str,
     ids = vocab(tokens)
 
     return tokens, ids, length, lemmas, token_offsets
-
 
 def transpose_dict_of_lists(dict_of_lists: Mapping[str, list], keys: List[str]) \
         -> List[Mapping[str, Any]]:

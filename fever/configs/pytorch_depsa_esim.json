@@ -3,7 +3,7 @@
     "__description": "train on our train+dev+test data",
     "__variables": {
       "___root_dir___": "/scratch/fz758/ucl",
-      "___train_rte___": "pytorch_esim_elmo",
+      "___train_rte___": "___model_name___",
       "___inference_rte___": "___model_name___",
       "___aggregator___": "___model_name___",
       "___score___": "___model_name___",
@@ -36,7 +36,7 @@
     },
     "inference_rte": {
       "n_sentences": 15,
-      "batch_size": 4
+      "batch_size": 8
     },
     "aggregator": {
       "layers": [

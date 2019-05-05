@@ -5,8 +5,6 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-from jack.core import TensorPortTokens
-
 
 def get_list_shape(xs):
     if isinstance(xs, int):
@@ -25,6 +23,9 @@ def get_list_shape(xs):
                         shape[2] = max(len(y), shape[2])
     return shape
 
+def is_tensor_port_tokens(x):
+    return isinstance(x, list) and isinstance(x[0], list) and isinstance(x[0][0], str)
+
 
 def numpify(xs, pad=0, keys=None, dtypes=None):
     """Converts a dict or list of Python data into a dict of numpy arrays."""
@@ -34,8 +35,9 @@ def numpify(xs, pad=0, keys=None, dtypes=None):
 
     for i, (key, x) in enumerate(xs_iter):
         try:
-            if isinstance(key, TensorPortTokens):
+            if is_tensor_port_tokens(x):
                 xs_np[key] = x
+                continue
             if (keys is None or key in keys) and not isinstance(x, np.ndarray):
                 shape = get_list_shape(x)
                 dtype = dtypes[i] if dtypes is not None else np.int64
