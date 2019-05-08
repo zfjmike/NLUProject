@@ -10,7 +10,15 @@ from tqdm import tqdm
 from util import abs_path
 from fever_io import titles_to_jsonl_num, load_doclines, read_jsonl, save_jsonl, get_evidence_sentence_list
 from analyse import compare_evidences
+
+import stanfordnlp
+import re
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
+
+nlp = stanfordnlp.Pipeline(tokenize_pretokenized=True, use_gpu=False)
+type2id = nlp.processors['depparse'].trainer.vocab['deprel']
+pattern = re.compile('\w+|[^\w\s]')
 
 
 def convert_label(label, inverse=False):
@@ -28,13 +36,30 @@ def convert_label(label, inverse=False):
         return snli2fever[label]
 
 
-def snli_format(id, pair_id, label, evidence, claim):
+def snli_format(id, pair_id, label, evidence, claim,
+        q_tokenized = None,
+        q_dep_i = None,
+        q_dep_j = None,
+        q_dep_type = None,
+        s_tokenized = None,
+        s_dep_i = None,
+        s_dep_j = None,
+        s_dep_type = None
+        ):
     return {
         "captionID": id,
         "pairID": pair_id,
         "gold_label": label,
         "sentence1": evidence,
-        "sentence2": claim
+        "sentence2": claim,
+        "q_tokenized": q_tokenized,
+        "q_dep_i": q_dep_i,
+        "q_dep_j": q_dep_j,
+        "q_dep_type": q_dep_type,
+        "s_tokenized": s_tokenized,
+        "s_dep_i": s_dep_i,
+        "s_dep_j": s_dep_j,
+        "s_dep_type": s_dep_type
     }
 
 def sampling(converted_instances):
@@ -129,7 +154,8 @@ def _convert_instance(instance, t2l2s, prependlinum, prependtitle, use_ir_predic
     return converted_instances
 
 
-def convert(instances, prependlinum=False, prependtitle=False, use_ir_prediction=False, n_sentences=5):
+def convert(instances, prependlinum=False, prependtitle=False, use_ir_prediction=False, n_sentences=5,
+    depparse_batch_size=32):
     """convert FEVER format to jack SNLI format
     Arg
     instances: list of dictionary of FEVER format
@@ -171,6 +197,51 @@ def convert(instances, prependlinum=False, prependtitle=False, use_ir_prediction
         converted_instances.extend(
             _convert_instance(
                 instance, t2l2s, prependlinum=prependlinum, prependtitle=prependtitle, use_ir_prediction=use_ir_prediction, n_sentences=n_sentences))
+    
+    
+    print("evaluating dependency...")
+    for i in tqdm(range(0, len(converted_instances), depparse_batch_size)):
+        nlp_input = ""
+        n_sent = 0
+        for j in range(i, min(len(converted_instances), i+depparse_batch_size)):
+            question = converted_instances[j]["sentence2"]
+            support = converted_instances[j]["sentence1"]
+            # print(support, question)
+            converted_instances[j]["q_tokenized"] = pattern.findall(question)
+            converted_instances[j]["s_tokenized"] = pattern.findall(support)
+            if j > i:
+                nlp_input += "\n"
+            nlp_input += ((" ".join(converted_instances[j]["q_tokenized"])) + "\n" + \
+                    " ".join(converted_instances[j]["s_tokenized"]))
+            n_sent += 2
+        doc = nlp(nlp_input)
+        # print(len(doc.sentences), n_sent)
+        assert len(doc.sentences) == n_sent
+        for j in range(i, min(len(converted_instances), i+depparse_batch_size)):
+            converted_instances[j]["q_dep_i"] = [None] * (len(converted_instances[j]["q_tokenized"]) - 1)
+            converted_instances[j]["q_dep_j"] = [None] * (len(converted_instances[j]["q_tokenized"]) - 1)
+            converted_instances[j]["q_dep_type"] = [None] * (len(converted_instances[j]["q_tokenized"]) - 1)
+            converted_instances[j]["s_dep_i"] = [None] * (len(converted_instances[j]["s_tokenized"]) - 1)
+            converted_instances[j]["s_dep_j"] = [None] * (len(converted_instances[j]["s_tokenized"]) - 1)
+            converted_instances[j]["s_dep_type"] = [None] * (len(converted_instances[j]["s_tokenized"]) - 1)
+
+            idx = 0
+            for d in doc.sentences[(j-i)*2].dependencies:
+                if d[1] == 'root':
+                    continue
+                converted_instances[j]["q_dep_i"][idx] = int(d[0].index) - 1
+                converted_instances[j]["q_dep_j"][idx] = int(d[2].index) - 1
+                converted_instances[j]["q_dep_type"][idx] = type2id.unit2id(d[1])
+                idx += 1
+            idx = 0
+            for d in doc.sentences[(j-i)*2+1].dependencies:
+                if d[1] == 'root':
+                    continue
+                converted_instances[j]["s_dep_i"][idx] = int(d[0].index) - 1
+                converted_instances[j]["s_dep_j"][idx] = int(d[2].index) - 1
+                converted_instances[j]["s_dep_type"][idx] = type2id.unit2id(d[1])
+                idx += 1
+
 
     return converted_instances
 
@@ -184,6 +255,7 @@ if __name__ == "__main__":
     parser.add_argument("--prependlinum", action="store_true")
     parser.add_argument("--prependtitle", action="store_true")
     parser.add_argument("--convert_test", action="store_true")
+    parser.add_argument("--depparse_batch_size", default=32, type=int)
     # parser.add_argument("--testset", help="turn on when you convert test data", action="store_true")
     args = parser.parse_args()
     print(args)
@@ -193,7 +265,10 @@ if __name__ == "__main__":
 
         print("input:\n", test_in)
         fever_format = json.loads(test_in)
-        snli_format_instances = convert(fever_format, prependlinum=args.prependlinum, prependtitle=args.prependtitle, use_ir_prediction=args.use_ir_pred, n_sentences=args.n_sentences)
+        snli_format_instances = convert(fever_format, 
+            prependlinum=args.prependlinum, prependtitle=args.prependtitle, 
+            use_ir_prediction=args.use_ir_pred, n_sentences=args.n_sentences,
+            depparse_batch_size=args.depparse_batch_size)
         print("\noutput:\n", json.dumps(snli_format_instances, indent=4))
 
     else:
@@ -202,5 +277,8 @@ if __name__ == "__main__":
         keyerr_count = 0
 
         instances = read_jsonl(args.src)
-        snli_format_instances = convert(instances, prependlinum=args.prependlinum, prependtitle=args.prependtitle, use_ir_prediction=args.use_ir_pred, n_sentences=args.n_sentences)
+        snli_format_instances = convert(instances, 
+            prependlinum=args.prependlinum, prependtitle=args.prependtitle, 
+            use_ir_prediction=args.use_ir_pred, n_sentences=args.n_sentences,
+            depparse_batch_size=args.depparse_batch_size)
         save_jsonl(snli_format_instances, args.tar, skip_if_exists=True)

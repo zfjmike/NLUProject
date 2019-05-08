@@ -40,6 +40,15 @@ def __convert_snli_instance(instance):
         queb['questions'] = [
             {'question': instance['sentence2'],
              'answers': [{'text': instance['gold_label']}]}]
+        if 'q_tokenized' in instance:
+            queb['q_tokenized'] = instance['q_tokenized']
+            queb['q_dep_i'] = instance['q_dep_i']
+            queb['q_dep_j'] = instance['q_dep_j']
+            queb['q_dep_type'] = instance['q_dep_type']
+            queb['s_tokenized'] = instance['s_tokenized']
+            queb['s_dep_i'] = instance['s_dep_i']
+            queb['s_dep_j'] = instance['s_dep_j']
+            queb['s_dep_type'] = instance['s_dep_type']
     return queb
 
 

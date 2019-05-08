@@ -20,8 +20,8 @@
       "test_input_file": "___root_dir___/fever/data/shared_task_test.jsonl"
     },
     "convert": {
-      "train_converted_file": "___root_dir___/fever/data/converted/train+dev+test.ver0727.p15.s30_title.jsonl",
-      "dev_converted_file": "___root_dir___/fever/data/converted/test.ver0727.p15.s30_title.jsonl"
+      "train_converted_file": "___root_dir___/fever/data/converted/train+dev+test.dep.jsonl",
+      "dev_converted_file": "___root_dir___/fever/data/converted/test.dep.jsonl"
     },
     "train_rte": {
       "jack_config_file": "___root_dir___/jack/conf/nli/fever/___model_name___.yaml",
