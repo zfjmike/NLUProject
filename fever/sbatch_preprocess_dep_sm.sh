@@ -14,4 +14,4 @@ source ~/.bashrc
 conda activate ucl
 cd /scratch/fz758/ucl/fever
 
-python pipeline.py --config configs/pytorch_depsa_esim.json --overwrite --model pytorch_depsa_esim
+python pipeline.py --config configs/pytorch_depsa_esim_sm.json --overwrite --model pytorch_depsa_esim --small_test

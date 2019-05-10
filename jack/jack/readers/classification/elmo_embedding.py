@@ -66,43 +66,43 @@ class ELMoEmbeddingInputModule(OnlineInputModule[MCAnnotation]):
         self.shared_resources.char_vocab = preprocessing.char_vocab_from_vocab(self.shared_resources.vocab)
 
         # Preprocess dependency info
-        if self.shared_resources.config.get("use_dep_sa", False):
-            print("Process dependency information...", file=sys.stderr)
-            nlp = stanfordnlp.Pipeline()
-            type2id = nlp.processors['depparse'].trainer.vocab['deprel']
+        # if self.shared_resources.config.get("use_dep_sa", False):
+        #     print("Process dependency information...", file=sys.stderr)
+        #     nlp = stanfordnlp.Pipeline()
+        #     type2id = nlp.processors['depparse'].trainer.vocab['deprel']
 
-            for i in tqdm(range(len(data))):
-                setting, _ = data[i]
-                question = setting.question
-                support = setting.support[0]
+        #     for i in tqdm(range(len(data))):
+        #         setting, _ = data[i]
+        #         question = setting.question
+        #         support = setting.support[0]
 
-                doc = nlp(question + support)
+        #         doc = nlp(question + support)
 
-                setting.q_tokenized = [w.text for w in doc.sentences[0].words]
-                setting.s_tokenized = [w.text for w in doc.sentences[1].words]
+        #         setting.q_tokenized = [w.text for w in doc.sentences[0].words]
+        #         setting.s_tokenized = [w.text for w in doc.sentences[1].words]
 
-                setting.q_dep_i = [None] * (len(setting.q_tokenized) - 1)
-                setting.q_dep_j = [None] * (len(setting.q_tokenized) - 1)
-                setting.q_dep_type = [None] * (len(setting.q_tokenized) - 1)
-                for idx, d in enumerate(doc.sentences[0].dependencies):
-                    if d[1] == 'root':
-                        continue
-                    setting.q_dep_i[idx] = int(d[0].index) - 1
-                    setting.q_dep_j[idx] = int(d[2].index) - 1
-                    setting.q_dep_type[idx] = type2id.unit2id(d[1])
+        #         setting.q_dep_i = [None] * (len(setting.q_tokenized) - 1)
+        #         setting.q_dep_j = [None] * (len(setting.q_tokenized) - 1)
+        #         setting.q_dep_type = [None] * (len(setting.q_tokenized) - 1)
+        #         for idx, d in enumerate(doc.sentences[0].dependencies):
+        #             if d[1] == 'root':
+        #                 continue
+        #             setting.q_dep_i[idx] = int(d[0].index) - 1
+        #             setting.q_dep_j[idx] = int(d[2].index) - 1
+        #             setting.q_dep_type[idx] = type2id.unit2id(d[1])
                 
-                setting.s_dep_i = [None] * (len(setting.s_tokenized) - 1)
-                setting.s_dep_j = [None] * (len(setting.s_tokenized) - 1)
-                setting.s_dep_type = [None] * (len(setting.s_tokenized) - 1)
-                for idx, d in enumerate(doc.sentences[1].dependencies):
-                    if d[1] == 'root':
-                        continue
-                    setting.s_dep_i[idx] = int(d[0].index) - 1
-                    setting.s_dep_j[idx] = int(d[2].index) - 1
-                    setting.s_dep_type[idx] = type2id.unit2id(d[1])
+        #         setting.s_dep_i = [None] * (len(setting.s_tokenized) - 1)
+        #         setting.s_dep_j = [None] * (len(setting.s_tokenized) - 1)
+        #         setting.s_dep_type = [None] * (len(setting.s_tokenized) - 1)
+        #         for idx, d in enumerate(doc.sentences[1].dependencies):
+        #             if d[1] == 'root':
+        #                 continue
+        #             setting.s_dep_i[idx] = int(d[0].index) - 1
+        #             setting.s_dep_j[idx] = int(d[2].index) - 1
+        #             setting.s_dep_type[idx] = type2id.unit2id(d[1])
         
-            if torch.cuda.is_available():
-                torch.cuda.empty_cache()
+        #     if torch.cuda.is_available():
+        #         torch.cuda.empty_cache()
     
     @property
     def training_ports(self) -> List[TensorPort]:

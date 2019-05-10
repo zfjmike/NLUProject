@@ -56,6 +56,8 @@ def convert(config):
         options.append("--use_ir_pred")
     if config["n_sentences"]:
         options.extend(["--n_sentences", str(config["n_sentences"])])
+    if config["small_test"]:
+        options.extend(["--num_samples", str(10000)])
 
     # train data
     if not os.path.exists(config["train_converted_file"]):
@@ -250,6 +252,8 @@ if __name__ == '__main__':
         "--model", default="{0:model_%Y%m%d%H%M%S}".format(now))
     parser.add_argument(
         "--overwrite", action="store_true")
+    parser.add_argument(
+        "--small_test", action="store_true")
     args = parser.parse_args()
     if os.path.exists(os.path.join("results", args.model, "org_config.json")) and not args.overwrite:
         logger.warning("overwriting the existing model due to --overwrite flag.")
@@ -295,6 +299,10 @@ if __name__ == '__main__':
     conf_convert = config["convert"]
     logger.info("%s exists?: %s", conf_convert["train_converted_file"], os.path.exists(conf_convert["train_converted_file"]))
     logger.info("%s exists?: %s", conf_convert["dev_converted_file"], os.path.exists(conf_convert["dev_converted_file"]))
+    if args.small_test:
+        conf_convert["small_test"] = True
+    else:
+        conf_convert["small_test"] = False
     if not( os.path.exists(
             conf_convert["train_converted_file"]) and os.path.exists(
                 conf_convert["dev_converted_file"])):
