@@ -36,7 +36,7 @@
     },
     "inference_rte": {
       "n_sentences": 15,
-      "batch_size": 8
+      "batch_size": 32
     },
     "aggregator": {
       "layers": [

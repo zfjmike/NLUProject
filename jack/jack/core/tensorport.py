@@ -175,15 +175,15 @@ class Ports:
                               "Represents questions using symbol vectors",
                               "[batch_size, max_num_question_tokens]")
         
-        question_dep_i = TensorPort(np.int32, [None, None], "question_dependency_i",
+        question_dep_i = TensorPort(np.long, [None, None], "question_dependency_i",
                               "Head of dependencies in questions",
                               "[batch_size, num_sequences-1]")
         
-        question_dep_j = TensorPort(np.int32, [None, None], "question_dependency_i",
+        question_dep_j = TensorPort(np.long, [None, None], "question_dependency_i",
                               "Target of dependencies in questions",
                               "[batch_size, num_sequences-1]")
         
-        question_dep_type = TensorPort(np.int32, [None, None], "question_dependency_i",
+        question_dep_type = TensorPort(np.long, [None, None], "question_dependency_i",
                               "Type id of dependencies in questions",
                               "[batch_size, num_sequences-1]")
 
@@ -191,15 +191,15 @@ class Ports:
                              "Represents instances with single support documents",
                              "[batch_size, max_num_tokens]")
         
-        support_dep_i = TensorPort(np.int32, [None, None], "support_dependency_i",
+        support_dep_i = TensorPort(np.long, [None, None], "support_dependency_i",
                               "Head of dependencies in supports",
                               "[batch_size, num_sequences-1]")
         
-        support_dep_j = TensorPort(np.int32, [None, None], "support_dependency_i",
+        support_dep_j = TensorPort(np.long, [None, None], "support_dependency_i",
                               "Target of dependencies in supports",
                               "[batch_size, num_sequences-1]")
         
-        support_dep_type = TensorPort(np.int32, [None, None], "support_dependency_i",
+        support_dep_type = TensorPort(np.long, [None, None], "support_dependency_i",
                               "Type id of dependencies in supports",
                               "[batch_size, num_sequences-1]")
 

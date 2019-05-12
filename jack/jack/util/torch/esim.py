@@ -279,7 +279,6 @@ class DepSAESIM(nn.Module):
         self._premises_self_attention = SelfAttention()
         self._hypotheses_self_attention = SelfAttention()
 
-        print("==== Self Attention is used ====")
         self._dep_generator = DependencyGenerator(
                                 use_gpu=(device == 'cuda' or device == 'gpu'))
 

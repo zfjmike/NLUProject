@@ -54,6 +54,9 @@ def numpify(xs, pad=0, keys=None, dtypes=None):
                             for _i, _values in enumerate(values):
                                 f(tensor[_i], _values)
                         else:
+                            for v in values:
+                                if v is None:
+                                    print(xs)
                             tensor[0:len(values)] = [v for v in values]
 
                     f(x_np, x)

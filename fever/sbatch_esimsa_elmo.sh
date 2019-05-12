@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH --verbose
 #SBATCH --nodes=1
-#SBATCH --cpus-per-task=4
-#SBATCH --time=16:00:00
-#SBATCH --mem=16GB
-#SBATCH --job-name=pytorch_esim_elmo
+#SBATCH --cpus-per-task=8
+#SBATCH --time=36:00:00
+#SBATCH --mem=24GB
+#SBATCH --job-name=esimsa+elmo
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=fz758+monitor@nyu.edu
 #SBATCH --output=hpc_outputs/slurm_%j.out

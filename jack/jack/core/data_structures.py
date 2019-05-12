@@ -105,7 +105,8 @@ def _jack_to_qasetting(instance, value, global_candidates):
                 s_dep_j=instance['s_dep_j'],
                 s_dep_type=instance['s_dep_type']
                 ), answers
-        yield QASetting(question, support, candidates=candidates, id=idd), answers
+        else:
+            yield QASetting(question, support, candidates=candidates, id=idd), answers
 
 
 def jack_to_qasetting(jtr_data, max_count=None):

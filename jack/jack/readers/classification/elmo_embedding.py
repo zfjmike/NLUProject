@@ -242,6 +242,21 @@ class ELMoEmbeddingInputModule(OnlineInputModule[MCAnnotation]):
         # Elmo embeddings
         tokens_support = [a.support_tokens for a in annotations]
         tokens_question = [a.question_tokens for a in annotations]
+
+        # debug
+        tokens_support_len = 0
+        tokens_question_len = 0
+        tokens_support_maxlen = 0
+        tokens_question_maxlen = 0
+        for a in annotations:
+            tokens_support_len += len(a.support_tokens)
+            tokens_question_len += len(a.question_tokens)
+            tokens_support_maxlen = max(tokens_support_maxlen, len(a.support_tokens))
+            tokens_question_maxlen = max(tokens_question_maxlen, len(a.question_tokens))
+        print('Q len:', tokens_question_len, 'maxlen:', tokens_question_maxlen,
+                '  S len:', tokens_support_len, 'maxlen:', tokens_support_maxlen, 
+                file=sys.stderr)
+
         
         chars_support = batch_to_ids(tokens_support)
         chars_question = batch_to_ids(tokens_question)
