@@ -251,7 +251,7 @@ class ClassificationSingleSupportInputModule(OnlineInputModule[MCAnnotation]):
         return preprocessed
 
     def preprocess_instance(self, idd: int, question: QASetting,
-                            answers: Optional[List[Answer]] = None) -> MCAnnotation:
+                            answers: Optional[List[Answer]] = None) -> Optional[MCAnnotation]:
         has_answers = answers is not None
 
         if self.shared_resources.config.get("use_dep_sa", False):
@@ -288,7 +288,13 @@ class ClassificationSingleSupportInputModule(OnlineInputModule[MCAnnotation]):
                 support_ids=s_ids,
                 support_length=s_length,
                 answer=self.shared_resources.answer_vocab(answers[0].text) if has_answers else 0,
-                id=idd
+                id=idd,
+                question_dep_i = None,
+                question_dep_j = None,
+                question_dep_type = None,
+                support_dep_i = None,
+                support_dep_j = None,
+                support_dep_type = None,
             )
 
     def create_batch(self, annotations: List[MCAnnotation],

@@ -253,9 +253,9 @@ class ELMoEmbeddingInputModule(OnlineInputModule[MCAnnotation]):
             tokens_question_len += len(a.question_tokens)
             tokens_support_maxlen = max(tokens_support_maxlen, len(a.support_tokens))
             tokens_question_maxlen = max(tokens_question_maxlen, len(a.question_tokens))
-        print('Q len:', tokens_question_len, 'maxlen:', tokens_question_maxlen,
-                '  S len:', tokens_support_len, 'maxlen:', tokens_support_maxlen, 
-                file=sys.stderr)
+        # print('Q len:', tokens_question_len, 'maxlen:', tokens_question_maxlen,
+        #         '  S len:', tokens_support_len, 'maxlen:', tokens_support_maxlen, 
+        #         file=sys.stderr)
 
         
         chars_support = batch_to_ids(tokens_support)

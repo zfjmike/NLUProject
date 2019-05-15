@@ -20,8 +20,19 @@
       "test_input_file": "___root_dir___/fever/data/shared_task_test.jsonl"
     },
     "convert": {
-      "train_converted_file": "___root_dir___/fever/data/converted/train+dev+test.dep.jsonl",
-      "dev_converted_file": "___root_dir___/fever/data/converted/test.dep.jsonl"
+      "train_converted_file": {
+        "__overwrite": "___root_dir___/fever/data/converted/train+dev+test.dep.jsonl"
+      },
+      "dev_converted_file": {
+        "__overwrite": "___root_dir___/fever/data/converted/dev.dep.jsonl"
+      },
+      "n_sentences": 5,
+      "test_input_file": {
+        "__overwrite": "ir test_output_file"
+      },
+      "test_converted_file": {
+        "__overwrite": "___root_dir___/fever/data/converted/test.dep.jsonl"
+      }
     },
     "train_rte": {
       "jack_config_file": "___root_dir___/jack/conf/nli/fever/___model_name___.yaml",
@@ -35,8 +46,17 @@
       }
     },
     "inference_rte": {
-      "n_sentences": 15,
-      "batch_size": 8
+      "n_sentences": 5,
+      "batch_size": 8,
+      "preprocessed_train_input_file": {
+        "__overwrite": "convert train_converted_file"
+      },
+      "preprocessed_dev_input_file": {
+        "__overwrite": "convert dev_converted_file"
+      },
+      "preprocessed_test_input_file": {
+        "__overwrite": "convert test_converted_file"
+      }
     },
     "aggregator": {
       "layers": [
@@ -44,7 +64,7 @@
         100,
         100
       ],
-      "n_sentences": 7,
+      "n_sentences": 5,
       "sampling": false,
       "ev_scores": true
     },

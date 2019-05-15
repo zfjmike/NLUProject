@@ -64,5 +64,6 @@ def load_snli(path, max_count=None):
         A list of input-answer pairs.
     """
     # We load to jtr dict and convert to qa settings for now
+    print(path)
     jtr_data = convert_snli(path)
     return jack_to_qasetting(jtr_data, max_count)

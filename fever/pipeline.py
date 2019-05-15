@@ -56,8 +56,6 @@ def convert(config):
         options.append("--use_ir_pred")
     if config["n_sentences"]:
         options.extend(["--n_sentences", str(config["n_sentences"])])
-    if config["small_test"]:
-        options.extend(["--num_samples", str(10000)])
 
     # train data
     if not os.path.exists(config["train_converted_file"]):
@@ -74,6 +72,16 @@ def convert(config):
         __run_python(script, gpu=False, env={"PYTHONPATH": "."})
     else:
         logger.info("%s already exists. skipping conversion for dev", config["dev_converted_file"])
+
+    # test data
+    if ("test_converted_file" in config) and (not os.path.exists(config["test_converted_file"])):
+        options[0] = config["test_input_file"]
+        options[1] = config["test_converted_file"]
+        script = ["converter.py"] + options
+        __run_python(script, gpu=False, env={"PYTHONPATH": "."})
+    else:
+        if "test_converted_file" in config:
+            logger.info("%s already exists. skipping conversion for dev", config["test_converted_file"])
 
 
 def train_rte(config):
@@ -110,7 +118,11 @@ def inference_rte(config):
 
     # train data
     if not os.path.exists(config["train_predicted_labels_and_scores_file"]):
-        script = ["../fever/jack_reader.py"] + options
+        options_train = options
+        if "preprocessed_train_input_file" in config:
+            options_train.extend(["--preprocessed_in_file", 
+                config["preprocessed_train_input_file"]])
+        script = ["../fever/jack_reader.py"] + options_train
         __run_python(script, gpu=True, env={"PYTHONPATH": "."})
     else:
         logger.info("skipping inference rte for train. %s exists", config["train_predicted_labels_and_scores_file"])
@@ -119,7 +131,11 @@ def inference_rte(config):
     if not os.path.exists(config["dev_predicted_labels_and_scores_file"]):
         options[0] = config["dev_input_file"]
         options[1] = config["dev_predicted_labels_and_scores_file"]
-        script = ["../fever/jack_reader.py"] + options
+        options_dev = options
+        if "preprocessed_dev_input_file" in config:
+            options_dev.extend(["--preprocessed_in_file",
+                config["preprocessed_dev_input_file"]])
+        script = ["../fever/jack_reader.py"] + options_dev
         __run_python(script, gpu=True, env={"PYTHONPATH": "."})
     else:
         logger.info("skipping inference rte for dev. %s exists", config["dev_predicted_labels_and_scores_file"])
@@ -128,7 +144,11 @@ def inference_rte(config):
     if not os.path.exists(config["test_predicted_labels_and_scores_file"]):
         options[0] = config["test_input_file"]
         options[1] = config["test_predicted_labels_and_scores_file"]
-        script = ["../fever/jack_reader.py"] + options
+        options_test = options
+        if "preprocessed_test_input_file" in config:
+            options_test.extend(["--preprocessed_in_file",
+                config["preprocessed_test_input_file"]])
+        script = ["../fever/jack_reader.py"] + options_test
         __run_python(script, gpu=True, env={"PYTHONPATH": "."})
     else:
         logger.info("skipping inference rte for test. %s exists", config["test_predicted_labels_and_scores_file"])
@@ -255,6 +275,7 @@ if __name__ == '__main__':
     parser.add_argument(
         "--small_test", action="store_true")
     args = parser.parse_args()
+    print(args)
     if os.path.exists(os.path.join("results", args.model, "org_config.json")) and not args.overwrite:
         logger.warning("overwriting the existing model due to --overwrite flag.")
         raise RuntimeError("you cannot overwrite the config. use different model name.")
@@ -290,7 +311,8 @@ if __name__ == '__main__':
     logger.info("%s exists?: %s", config_ir["train_output_file"], os.path.exists(config_ir["train_output_file"]))
     logger.info("%s exists?: %s", config_ir["dev_output_file"], os.path.exists(config_ir["dev_output_file"]))
     if not (os.path.exists(config_ir["train_output_file"])
-            and os.path.exists(config_ir["dev_output_file"])):
+            and os.path.exists(config_ir["dev_output_file"])
+            and os.path.exists(config_ir["test_output_file"])):
         ir(config["ir"])
     else:
         logger.info("skipping ir...")
@@ -299,13 +321,10 @@ if __name__ == '__main__':
     conf_convert = config["convert"]
     logger.info("%s exists?: %s", conf_convert["train_converted_file"], os.path.exists(conf_convert["train_converted_file"]))
     logger.info("%s exists?: %s", conf_convert["dev_converted_file"], os.path.exists(conf_convert["dev_converted_file"]))
-    if args.small_test:
-        conf_convert["small_test"] = True
-    else:
-        conf_convert["small_test"] = False
-    if not( os.path.exists(
-            conf_convert["train_converted_file"]) and os.path.exists(
-                conf_convert["dev_converted_file"])):
+    logger.info("%s exists?: %s", conf_convert["test_converted_file"], os.path.exists(conf_convert["test_converted_file"]))
+    if not( os.path.exists(conf_convert["train_converted_file"]) 
+        and os.path.exists(conf_convert["dev_converted_file"])
+        and os.path.exists(conf_convert["test_converted_file"])):
         convert(conf_convert)
     else:
         logger.info("skipping conversion...")
@@ -337,7 +356,12 @@ if __name__ == '__main__':
 
     if "rerank" in config and not os.path.exists(config["rerank"]["reranked_evidence_file"]):
         rerank(config["rerank"])
+    else:
+        if "rerank" in config:
+            logger.info("skipping rerank... %s exists.", config["rerank"]["reranked_evidence_file"])
 
     # scoring
     if not os.path.exists(config["score"]["score_file"]):
         score(config["score"])
+    else:
+        logger.info("skipping score... %s exists.", config["score"]["score_file"])

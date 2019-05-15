@@ -23,7 +23,8 @@ def convert_snli(snli_file_jsonl):
         - instances with gold labels '-' are removed from the corpus
     """
     with open(snli_file_jsonl, 'r') as f:
-        data = [__convert_snli_instance(json.loads(line.strip())) for line in f.readlines()]
+        data = [json.loads(line.strip()) for line in f.readlines()]
+        data = [__convert_snli_instance(d) for d in data]
 
         return {'meta': 'SNLI',
                 'globals': {'candidates': __candidates},
@@ -33,6 +34,8 @@ def convert_snli(snli_file_jsonl):
 
 def __convert_snli_instance(instance):
     queb = {}
+    if ('q_tokenized' in instance) and (instance['q_tokenized'] is None):
+        return queb
     if instance['gold_label'] in __candidate_labels:
         queb['id'] = instance['pairID']
         queb['support'] = [

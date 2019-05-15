@@ -143,7 +143,7 @@ def _convert_instance(instance, t2l2s, prependlinum, prependtitle, use_ir_predic
                 snli_format(
                     id="{}-{}".format(instance["id"], str(eidx)),
                     pair_id="{}-{}".format(instance["id"], str(eidx)),
-                    label=convert_label(instance["label"]),
+                    label=None if "label" not in instance else convert_label(instance["label"]),
                     evidence=_evidence_format(
                         get_evidence_sentence_list(
                             evidence_linum, t2l2s, prependlinum=prependlinum, prependtitle=prependtitle)),
@@ -160,12 +160,18 @@ def convert(instances, prependlinum=False, prependtitle=False, use_ir_prediction
     Returns
     instances: list of dictionary of jack SNLI format
     """
+
+    if not ("label" in instances[0]):
+        test = True
+    else:
+        test = False
+
     # get all titles and load t2l2s
     all_titles = list()
 
     # use "predicted_sentences" for NEI
     for instance in tqdm(instances, desc="process for NEI"):
-        if instance["label"] == "NOT ENOUGH INFO":
+        if ("label" not in instance) or (instance["label"] == "NOT ENOUGH INFO"):
             evidences = instance["predicted_sentences"][:n_sentences]
             # assert evidences == [(title, linum), (title, linum), ...]
 
@@ -200,8 +206,8 @@ def convert(instances, prependlinum=False, prependtitle=False, use_ir_prediction
     with torch.no_grad():
         if num_samples is None:
             num_samples = len(converted_instances)
-        for i in tqdm(range(0, num_samples, depparse_batch_size)):
-        # for i in tqdm(range(0, 10000, depparse_batch_size)):
+        # for i in tqdm(range(0, num_samples, depparse_batch_size)):
+        for i in tqdm(range(0, 1000, depparse_batch_size)):
             nlp_input = ""
             n_sent = 0
             for j in range(i, min(len(converted_instances), i+depparse_batch_size)):
@@ -210,15 +216,15 @@ def convert(instances, prependlinum=False, prependtitle=False, use_ir_prediction
                 # print(support, question)
                 converted_instances[j]["q_tokenized"] = pattern.findall(question)
                 converted_instances[j]["s_tokenized"] = pattern.findall(support)
-                if j > i:
-                    nlp_input += "\n"
                 nlp_input += ((" ".join(converted_instances[j]["q_tokenized"])) + "\n" + \
-                        " ".join(converted_instances[j]["s_tokenized"]))
+                        " ".join(converted_instances[j]["s_tokenized"])) + "\n"
                 n_sent += 2
             doc = nlp(nlp_input)
             # print(len(doc.sentences), n_sent)
             assert len(doc.sentences) == n_sent
             for j in range(i, min(len(converted_instances), i+depparse_batch_size)):
+                converted_instances[j]["q_tokenized"] = [t.text for t in doc.sentences[(j-i)*2].tokens]
+                converted_instances[j]["s_tokenized"] = [t.text for t in doc.sentences[(j-i)*2+1].tokens]
                 converted_instances[j]["q_dep_i"] = [None] * (len(converted_instances[j]["q_tokenized"]) - 1)
                 converted_instances[j]["q_dep_j"] = [None] * (len(converted_instances[j]["q_tokenized"]) - 1)
                 converted_instances[j]["q_dep_type"] = [None] * (len(converted_instances[j]["q_tokenized"]) - 1)
@@ -256,7 +262,7 @@ if __name__ == "__main__":
     parser.add_argument("--prependlinum", action="store_true")
     parser.add_argument("--prependtitle", action="store_true")
     parser.add_argument("--convert_test", action="store_true")
-    parser.add_argument("--depparse_batch_size", default=16, type=int)
+    parser.add_argument("--depparse_batch_size", default=12, type=int)
     parser.add_argument("--num_samples", default=None, type=int)
     # parser.add_argument("--testset", help="turn on when you convert test data", action="store_true")
     args = parser.parse_args()

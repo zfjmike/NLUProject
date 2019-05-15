@@ -123,7 +123,7 @@ def create_input3(predicted_labels, scores, sentence_scores, n_sentences):
     4 features for each predicted evidence: the 3 RTE class probabilities, and the IR score.
     All 3 class probabilities are given.
     """
-    assert len(predicted_labels[0]) == len(scores)
+    assert len(predicted_labels) == len(scores)
 
     if len(sentence_scores) == 0:
         return np.zeros([4*n_sentences])
@@ -131,7 +131,7 @@ def create_input3(predicted_labels, scores, sentence_scores, n_sentences):
     # loop over the predicted evidences
     features_per_predicted_evidence = []
     for per_evidence_labels, per_evidence_scores, ir_evidence_scores in \
-                        list(zip(predicted_labels[0], scores, sentence_scores))[:n_sentences]:
+                        list(zip(predicted_labels, scores, sentence_scores))[:n_sentences]:
 
         if not per_evidence_scores: # sometimes this is empty.
             new_features = [0.0, 0.0, 0.0, 0.0]
@@ -150,7 +150,7 @@ def create_input3(predicted_labels, scores, sentence_scores, n_sentences):
     if np_out.shape != (4*n_sentences,):
         import ipdb
         ipdb.set_trace()
-    assert np_out.shape == (4*n_sentences,), (np_out, len(predicted_labels[0]), len(scores), len(sentence_scores))
+    assert np_out.shape == (4*n_sentences,), (np_out, len(predicted_labels), len(scores), len(sentence_scores))
     return np_out
 
 
@@ -278,7 +278,7 @@ if __name__ == "__main__":
     # data: prepend_title_linum
     print(args)
     hyperparameter2performance = dict()
-    for n_sentences in [9]:#range(1, 16):
+    for n_sentences in [5]:#range(1, 16):
         print("=========== n_sentences {}============".format(str(n_sentences)))
         args.n_sentences = n_sentences
         # number of inputs will be 4 times number of evidence sentences.

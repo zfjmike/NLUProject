@@ -179,11 +179,11 @@ class Ports:
                               "Head of dependencies in questions",
                               "[batch_size, num_sequences-1]")
         
-        question_dep_j = TensorPort(np.long, [None, None], "question_dependency_i",
+        question_dep_j = TensorPort(np.long, [None, None], "question_dependency_j",
                               "Target of dependencies in questions",
                               "[batch_size, num_sequences-1]")
         
-        question_dep_type = TensorPort(np.long, [None, None], "question_dependency_i",
+        question_dep_type = TensorPort(np.long, [None, None], "question_dependency_type",
                               "Type id of dependencies in questions",
                               "[batch_size, num_sequences-1]")
 
@@ -195,11 +195,11 @@ class Ports:
                               "Head of dependencies in supports",
                               "[batch_size, num_sequences-1]")
         
-        support_dep_j = TensorPort(np.long, [None, None], "support_dependency_i",
+        support_dep_j = TensorPort(np.long, [None, None], "support_dependency_j",
                               "Target of dependencies in supports",
                               "[batch_size, num_sequences-1]")
         
-        support_dep_type = TensorPort(np.long, [None, None], "support_dependency_i",
+        support_dep_type = TensorPort(np.long, [None, None], "support_dependency_type",
                               "Type id of dependencies in supports",
                               "[batch_size, num_sequences-1]")
 

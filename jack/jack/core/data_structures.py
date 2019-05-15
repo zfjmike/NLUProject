@@ -5,7 +5,7 @@ Here we define light data structures to store the input to jack readers, and the
 """
 
 from typing import Tuple, Sequence
-
+import sys
 
 class Answer:
     """
@@ -130,6 +130,22 @@ def jack_to_qasetting(jtr_data, max_count=None):
             return default
 
     global_candidates = [value(c) for c in jtr_data['globals']['candidates']] if 'globals' in jtr_data else None
+
+    # # filter None
+    # cnt_none = 0
+    # instances = []
+    # for instance in jtr_data["instances"]:
+    #     if "q_tokenized" in instance:
+    #         if (None in instance['q_dep_i']) or (None in instance['q_dep_j']) or (None in instance['q_dep_type'])\
+    #             or (None in instance['s_dep_i']) or (None in instance['s_dep_j']) or (None in instance['s_dep_type']):
+    #             cnt += 1
+    #             continue
+    #         else:
+    #             instances.append(instance)
+    #     else:
+    #         instances = jtr_data["instances"]
+    #         break
+    # print('Filter %d None instances' % cnt, file=sys.stderr)
 
     ans = [(inp, answer) for i in jtr_data["instances"]
            for inp, answer in _jack_to_qasetting(i, value, global_candidates)][:max_count]

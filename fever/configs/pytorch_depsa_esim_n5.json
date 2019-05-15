@@ -9,7 +9,7 @@
       "___score___": "___model_name___",
       "___reader___": "reader",
       "___rerank___": "___model_name___",
-      "___model_name___": "pytorch_esim_elmo"
+      "___model_name___": "pytorch_depsa_esim"
     },
     "ir": {
       "train_output_file": "___root_dir___/fever/data/indexed_data/train+dev+test.ver0727.p15.s30.jsonl",
@@ -20,11 +20,16 @@
       "test_input_file": "___root_dir___/fever/data/shared_task_test.jsonl"
     },
     "convert": {
-      "train_converted_file": "___root_dir___/fever/data/converted/train+dev+test.ver0727.p15.s30_title.jsonl",
-      "dev_converted_file": "___root_dir___/fever/data/converted/test.ver0727.p15.s30_title.jsonl"
+      "train_converted_file": "___root_dir___/fever/data/converted/train+dev+test.dep.n5.small.jsonl",
+      "dev_converted_file": "___root_dir___/fever/data/converted/dev.dep.n5.small.jsonl",
+      "n_sentences": 5,
+      "test_input_file": {
+        "__overwrite": "ir test_output_file"
+      },
+      "test_converted_file": "___root_dir___/fever/data/converted/test.dep.n5.small.jsonl"
     },
     "train_rte": {
-      "jack_config_file": "___root_dir___/jack/conf/nli/fever/pytorch_esim_elmo.yaml",
+      "jack_config_file": "___root_dir___/jack/conf/nli/fever/___model_name___.yaml",
       "load_dir": "esim_snli",
       "save_dir": "___root_dir___/fever/results/___train_rte___/___reader___",
       "train_file": {
@@ -35,8 +40,11 @@
       }
     },
     "inference_rte": {
-      "n_sentences": 15,
-      "batch_size": 4
+      "n_sentences": 5,
+      "batch_size": 32,
+      "preprocessed_train_input_file": "___root_dir___/fever/data/converted/train+dev+test.dep.n5.small.jsonl",
+      "preprocessed_dev_input_file": "___root_dir___/fever/data/converted/dev.dep.n5.small.jsonl",
+      "preprocessed_test_input_file": "___root_dir___/fever/data/converted/test.dep.n5.small.jsonl"
     },
     "aggregator": {
       "layers": [
@@ -44,7 +52,7 @@
         100,
         100
       ],
-      "n_sentences": 7,
+      "n_sentences": 5,
       "sampling": false,
       "ev_scores": true
     },

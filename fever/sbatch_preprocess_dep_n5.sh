@@ -2,7 +2,7 @@
 #SBATCH --verbose
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=16
-#SBATCH --time=36:00:00
+#SBATCH --time=48:00:00
 #SBATCH --mem=64GB
 #SBATCH --job-name=preprocess_dep
 #SBATCH --mail-type=BEGIN,END,FAIL
@@ -14,4 +14,4 @@ source ~/.bashrc
 conda activate ucl
 cd /scratch/fz758/ucl/fever
 
-python pipeline.py --config configs/pytorch_depsa_esim_sm.json --overwrite --model pytorch_depsa_esim --small_test
+python pipeline.py --config configs/pytorch_depsa_esim_n5.json --overwrite --model pytorch_depsa_esim

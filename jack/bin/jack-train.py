@@ -108,7 +108,7 @@ def run(loader,
             embeddings = None
             if vocab_from_embeddings:
                 raise ValueError("If you want to create vocab from embeddings, embeddings have to be provided")
-
+    
     vocab = Vocab(vocab=embeddings.vocabulary if vocab_from_embeddings and embeddings is not None else None)
 
     if repr_dim_task_embedding < 1 and embeddings is None:
