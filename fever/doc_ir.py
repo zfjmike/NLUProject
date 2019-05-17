@@ -152,6 +152,7 @@ def doc_ir(data=list(),edocs=edict(),best=5,model=None):
     Returns a dictionary of n best document titles for each claim.
     """
     docs=dict()
+    data = data[0]
     for example in tqdm(data):
         tscores=best_titles(example["claim"],edocs,best,model)
         docs[example["id"]]=tscores
@@ -168,7 +169,7 @@ if __name__ == "__main__":
         edocs=title_edict(t2jnum)
         with open("data/edocs.bin","wb") as wb:
             pickle.dump(edocs,wb)
-    train, dev = load_split_trainset(9999)
+    train, dev = load_split_trainset(1000)
     docs=doc_ir(dev,edocs)
     title_hits(dev,docs)
     docs=doc_ir(train,edocs)

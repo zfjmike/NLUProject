@@ -123,6 +123,9 @@ def create_input3(predicted_labels, scores, sentence_scores, n_sentences):
     4 features for each predicted evidence: the 3 RTE class probabilities, and the IR score.
     All 3 class probabilities are given.
     """
+    if len(predicted_labels) == 1:
+        predicted_labels = predicted_labels[0]
+
     assert len(predicted_labels) == len(scores)
 
     if len(sentence_scores) == 0:

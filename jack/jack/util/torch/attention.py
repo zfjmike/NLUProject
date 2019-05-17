@@ -78,7 +78,8 @@ class SelfAttention(nn.Module):
     def forward(self,
                 premise_batch,
                 premise_mask,
-                premise_dep_mask=None):
+                premise_dep_mask=None,
+                visualize=False):
         """
         Args:
             premise_batch: A batch of sequences of vectors representing the
@@ -94,12 +95,14 @@ class SelfAttention(nn.Module):
         """
         # Dot product between premises and hypotheses in each sequence of
         # the batch.
-        similarity_matrix = premise_batch.bmm(premise_batch.transpose(2, 1)
+        _similarity_matrix = premise_batch.bmm(premise_batch.transpose(2, 1)
                                                               .contiguous())
 
         # Softmax attention weights.
         if premise_dep_mask is not None:
-            similarity_matrix = similarity_matrix * premise_dep_mask
+            similarity_matrix = _similarity_matrix * premise_dep_mask
+        else:
+            similarity_matrix = _similarity_matrix
 
         prem_hyp_attn = masked_softmax(similarity_matrix, premise_mask)
 
@@ -108,8 +111,13 @@ class SelfAttention(nn.Module):
         attended_premises = weighted_sum(premise_batch,
                                          prem_hyp_attn,
                                          premise_mask)
-
-        return attended_premises
+        if visualize:
+            if premise_dep_mask is not None:
+                return attended_premises, _similarity_matrix, premise_dep_mask, prem_hyp_attn
+            else:
+                return attended_premises, _similarity_matrix, prem_hyp_attn
+        else:
+            return attended_premises
 
 
 class DependencySelfAttention(nn.Module):

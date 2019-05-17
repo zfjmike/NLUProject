@@ -3,30 +3,31 @@
     "__description": "train on our train+dev+test data",
     "__variables": {
       "___root_dir___": "/scratch/fz758/ucl",
-      "___train_rte___": "___model_name___",
-      "___inference_rte___": "___model_name___",
-      "___aggregator___": "___model_name___",
-      "___score___": "___model_name___",
+      "___train_rte___": "___save_dir___",
+      "___inference_rte___": "___save_dir___",
+      "___aggregator___": "___save_dir___",
+      "___score___": "___save_dir___",
       "___reader___": "reader",
-      "___rerank___": "___model_name___",
-      "___model_name___": "pytorch_depsa_esim"
+      "___rerank___": "___save_dir___",
+      "___save_dir___": "esim_10k_n5",
+      "___model_name___": "pytorch_esim"
     },
     "ir": {
-      "train_output_file": "___root_dir___/fever/data/indexed_data/train+dev+test.ver0727.p15.s30.jsonl",
-      "dev_output_file": "___root_dir___/fever/data/indexed_data/test.ver0727.p15.s30.jsonl",
-      "test_output_file": "___root_dir___/fever/data/indexed_data/shared_task_test.ver0727.p15.s30.jsonl",
-      "train_input_file": "___root_dir___/fever/data/train.jsonl",
-      "dev_input_file": "___root_dir___/fever/data/test.jsonl",
-      "test_input_file": "___root_dir___/fever/data/shared_task_test.jsonl"
+      "train_output_file": "___root_dir___/fever/data/indexed_data/train+dev+test.10k.n5.jsonl",
+      "dev_output_file": "___root_dir___/fever/data/indexed_data/test.10k.n5.jsonl",
+      "test_output_file": "___root_dir___/fever/data/indexed_data/shared_task_test.10k.n5.jsonl",
+      "train_input_file": "___root_dir___/fever/data/train_10k.jsonl",
+      "dev_input_file": "___root_dir___/fever/data/dev_10k.jsonl",
+      "test_input_file": "___root_dir___/fever/data/test_10k.jsonl"
     },
     "convert": {
-      "train_converted_file": "___root_dir___/fever/data/converted/train+dev+test.dep.jsonl",
-      "dev_converted_file": "___root_dir___/fever/data/converted/dev.dep.jsonl",
+      "train_converted_file": "___root_dir___/fever/data/converted/train+dev+test.dep.10k.n5.jsonl",
+      "dev_converted_file": "___root_dir___/fever/data/converted/dev.dep.10k.n5.jsonl",
       "n_sentences": 5,
       "test_input_file": {
         "__overwrite": "ir test_output_file"
       },
-      "test_converted_file": "___root_dir___/fever/data/converted/test.dep.jsonl"
+      "test_converted_file": "___root_dir___/fever/data/converted/test.dep.10k.n5.jsonl"
     },
     "train_rte": {
       "jack_config_file": "___root_dir___/jack/conf/nli/fever/___model_name___.yaml",
@@ -42,9 +43,15 @@
     "inference_rte": {
       "n_sentences": 5,
       "batch_size": 32,
-      "preprocessed_train_input_file": "___root_dir___/fever/data/converted/train+dev+test.dep.n5.small.jsonl",
-      "preprocessed_dev_input_file": "___root_dir___/fever/data/converted/dev.dep.n5.small.jsonl",
-      "preprocessed_test_input_file": "___root_dir___/fever/data/converted/test.dep.n5.small.jsonl"
+      "preprocessed_train_input_file": {
+        "__overwrite": "convert train_converted_file"
+      },
+      "preprocessed_dev_input_file": {
+        "__overwrite": "convert dev_converted_file"
+      },
+      "preprocessed_test_input_file": {
+        "__overwrite": "convert test_converted_file"
+      }
     },
     "aggregator": {
       "layers": [
@@ -83,7 +90,7 @@
       "predicted_evidence_file": {
         "__overwrite": "rerank reranked_evidence_file"
       },
-      "actual_file": "___root_dir___/fever/data/indexed_data/test.ver0727.p15.s30.jsonl",
+      "actual_file": "___root_dir___/fever/data/indexed_data/test.10k.n5.jsonl",
       "test": {
         "predicted_evidence_file": {
           "__overwrite": "rerank test_reranked_evidence_file"
@@ -91,5 +98,4 @@
       }
     },
     "comment": "The same as submission_config, except using PyTorch"
-  }
-  
+}  

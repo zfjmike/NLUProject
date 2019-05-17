@@ -305,6 +305,30 @@ class DepSAESIM(nn.Module):
 
         # Initialize all weights and biases in the model.
         self.apply(_init_esim_weights)
+        self.visualize = None
+    
+    def set_visualize(self, visualize):
+        self.visualize = visualize
+    
+    def save_visualization_data(self, premises_sim_matrix, premises_dep_mask, premises_attn,
+                hypotheses_sim_matrix, hypotheses_dep_mask, hypotheses_attn):
+        premises_sim_matrix = premises_sim_matrix.detach().cpu().numpy().tolist()
+        premises_dep_mask = premises_dep_mask.detach().cpu().numpy().tolist()
+        premises_attn = premises_attn.detach().cpu().numpy().tolist()
+        hypotheses_sim_matrix = hypotheses_dep_mask.detach().cpu().numpy().tolist()
+        hypotheses_dep_mask = hypotheses_dep_mask.detach().cpu().numpy().tolist()
+        hypotheses_attn = hypotheses_attn.detach().cpu().numpy().tolist()
+        import json
+        json_data = {
+            'premises_sim_matrix': premises_sim_matrix,
+            'premises_dep_mask': premises_dep_mask,
+            'premises_attn': premises_attn,
+            'hypotheses_sim_matrix': hypotheses_sim_matrix,
+            'hypotheses_dep_mask': hypotheses_dep_mask,
+            'hypotheses_attn': hypotheses_attn,
+        }
+        with open(self.visualize, 'w') as f:
+            json.dump(json_data, f)
 
     def forward(self,
                 premises,
@@ -365,10 +389,22 @@ class DepSAESIM(nn.Module):
         encoded_hypotheses = self._encoding(embedded_hypotheses,
                                             hypotheses_lengths)
 
-        encoded_premises = self._premises_self_attention(
+        if self.visualize is None:
+            encoded_premises = self._premises_self_attention(
                             encoded_premises, premises_mask, premises_dep_mask)
-        encoded_hypotheses = self._hypotheses_self_attention(
+        else:
+            encoded_premises, premises_sim_matrix, premises_dep_mask, premises_attn = self._premises_self_attention(
+                            encoded_premises, premises_mask, premises_dep_mask, visualize=True)
+        if self.visualize is None:
+            encoded_hypotheses = self._hypotheses_self_attention(
                             encoded_hypotheses, hypotheses_mask, hypotheses_dep_mask)
+        else:
+            encoded_hypotheses, hypotheses_sim_matrix, hypotheses_dep_mask, hypotheses_attn = self._hypotheses_self_attention(
+                encoded_hypotheses, hypotheses_mask, hypotheses_dep_mask, visualize=True
+            )
+        if self.visualize is not None:
+            self.save_visualization_data(premises_sim_matrix, premises_dep_mask, premises_attn,
+                hypotheses_sim_matrix, hypotheses_dep_mask, hypotheses_attn)
         
         # print(encoded_premises.size(), premises_mask.size(), encoded_hypotheses.size(), hypotheses_mask.size())
         attended_premises, attended_hypotheses =\

@@ -28,6 +28,12 @@ MCAnnotation = NamedTuple('MCAnnotation', [
     ('support_length', int),
     ('answer', Optional[int]),
     ('id', Optional[int]),
+    ('question_dep_i', Optional[List[int]]),
+    ('question_dep_j', Optional[List[int]]),
+    ('question_dep_type', Optional[List[int]]),
+    ('support_dep_i', Optional[List[int]]),
+    ('support_dep_j', Optional[List[int]]),
+    ('support_dep_type', Optional[List[int]]),
 ])
 
 # Original ELMo options & weight
@@ -170,14 +176,14 @@ class ELMoEmbeddingInputModule(OnlineInputModule[MCAnnotation]):
                 support_ids = None,
                 support_length = len(question.s_tokenized),
                 answer = self.shared_resources.answer_vocab(answers[0].text) if has_answers else 0,
-                id = idd
+                id = idd,
+                question_dep_i = question.q_dep_i,
+                question_dep_j = question.q_dep_j,
+                question_dep_type = question.q_dep_type,
+                support_dep_i = question.s_dep_i,
+                support_dep_j = question.s_dep_j,
+                support_dep_type = question.s_dep_type,
             )
-            anno.question_dep_i = question.q_dep_i
-            anno.question_dep_j = question.q_dep_j
-            anno.question_dep_type = question.q_dep_type
-            anno.support_dep_i = question.s_dep_i
-            anno.support_dep_j = question.s_dep_j
-            anno.support_dep_type = question.s_dep_type
             return anno
         else:
             q_tokenized, q_ids, q_length, _, _ = preprocessing.nlp_preprocess(
@@ -195,7 +201,13 @@ class ELMoEmbeddingInputModule(OnlineInputModule[MCAnnotation]):
                 support_ids=s_ids,
                 support_length=s_length,
                 answer=self.shared_resources.answer_vocab(answers[0].text) if has_answers else 0,
-                id=idd
+                id=idd,
+                question_dep_i = None,
+                question_dep_j = None,
+                question_dep_type = None,
+                support_dep_i = None,
+                support_dep_j = None,
+                support_dep_type = None,
             )
     
     def create_batch(self, annotations: List[MCAnnotation],

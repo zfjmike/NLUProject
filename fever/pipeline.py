@@ -273,12 +273,14 @@ if __name__ == '__main__':
     parser.add_argument(
         "--overwrite", action="store_true")
     parser.add_argument(
-        "--small_test", action="store_true")
+        "--resume_training", action="store_true")
     args = parser.parse_args()
     print(args)
     if os.path.exists(os.path.join("results", args.model, "org_config.json")) and not args.overwrite:
         logger.warning("overwriting the existing model due to --overwrite flag.")
         raise RuntimeError("you cannot overwrite the config. use different model name.")
+
+    exec_flag = False
 
     with open(args.config) as f:
         config = json.load(f)
@@ -326,14 +328,16 @@ if __name__ == '__main__':
         and os.path.exists(conf_convert["dev_converted_file"])
         and os.path.exists(conf_convert["test_converted_file"])):
         convert(conf_convert)
+        exec_flag = True
     else:
         logger.info("skipping conversion...")
 
     # train rte model if file does not exist
     conf_train_rte = config["train_rte"]
     logger.info("%s exists?: %s", conf_train_rte["save_dir"], os.path.exists(conf_train_rte["save_dir"]))
-    if not os.path.isdir(conf_train_rte["save_dir"]):
+    if exec_flag or (not os.path.isdir(conf_train_rte["save_dir"])):
         train_rte(conf_train_rte)
+        exec_flag = True
     else:
         logger.info("skipping train rte...")
 
@@ -342,26 +346,30 @@ if __name__ == '__main__':
     logger.info("%s exists?: %s", conf_inference["train_predicted_labels_and_scores_file"], os.path.exists(conf_inference["train_predicted_labels_and_scores_file"]))
     logger.info("%s exists?: %s", conf_inference["dev_predicted_labels_and_scores_file"], os.path.exists(conf_inference["dev_predicted_labels_and_scores_file"]))
     logger.info("%s exists?: %s", conf_inference["test_predicted_labels_and_scores_file"], os.path.exists(conf_inference["test_predicted_labels_and_scores_file"]))
-    if not os.path.exists(
-            conf_inference["train_predicted_labels_and_scores_file"]) or not os.path.exists(conf_inference["dev_predicted_labels_and_scores_file"]) or not os.path.exists(conf_inference["test_predicted_labels_and_scores_file"]):
+    if exec_flag or (not os.path.exists(
+            conf_inference["train_predicted_labels_and_scores_file"]) or not os.path.exists(conf_inference["dev_predicted_labels_and_scores_file"]) or not os.path.exists(conf_inference["test_predicted_labels_and_scores_file"])):
         inference_rte(config["inference_rte"])
+        exec_flag = True
     else:
         logger.info("skipping inference rte...")
 
     # aggregation if file not exists
-    if not os.path.exists(config["aggregator"]["predicted_labels_file"]):
+    if exec_flag or (not os.path.exists(config["aggregator"]["predicted_labels_file"])):
         neural_aggregator(config["aggregator"])
+        exec_flag = True
     else:
         logger.info("skipping aggregation...")
 
-    if "rerank" in config and not os.path.exists(config["rerank"]["reranked_evidence_file"]):
+    if "rerank" in config and (exec_flag or not os.path.exists(config["rerank"]["reranked_evidence_file"])):
         rerank(config["rerank"])
+        exec_flag = True
     else:
         if "rerank" in config:
             logger.info("skipping rerank... %s exists.", config["rerank"]["reranked_evidence_file"])
 
     # scoring
-    if not os.path.exists(config["score"]["score_file"]):
+    if exec_flag or (not os.path.exists(config["score"]["score_file"])):
         score(config["score"])
+        exec_flag = True
     else:
         logger.info("skipping score... %s exists.", config["score"]["score_file"])

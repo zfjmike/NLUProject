@@ -37,6 +37,7 @@ def feverpredictions(data,evidence):
 
 def tofeverformat(data,docs,evidence):
     data2=data.copy()
+    data2 = data2[0]
     for instance in data2:
         cid=instance["id"]
         instance["predicted_pages"]=list()
