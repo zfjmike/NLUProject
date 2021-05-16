@@ -228,12 +228,15 @@ def load_fever_train(path="data/train.jsonl", howmany=999999):
                 break
     return data
 
-def load_paper_dataset(train=abs_path("data/train.jsonl"), dev=abs_path("data/dev.jsonl")):
+def load_paper_dataset(train=abs_path("data/train.jsonl"), 
+                        dev=abs_path("data/dev.jsonl"),
+                        test=abs_path("data/test.jsonl")):
     """Reads the Fever train/dev set used on the paper.
     """
     train_ds = load_fever_train(path=train, howmany=9999999999)
     dev_ds = load_fever_train(path=dev, howmany=9999999999)
-    return train_ds, dev_ds
+    test_ds = load_fever_train(path=test, howmany=9999999999)
+    return train_ds, dev_ds, test_ds
 
 
 

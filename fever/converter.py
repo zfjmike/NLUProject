@@ -2,6 +2,7 @@
 convert FEVER dataset format to SNLI format for makeing it work on jack
 """
 import os
+import sys
 import re
 import argparse
 import json
@@ -201,53 +202,63 @@ def convert(instances, prependlinum=False, prependtitle=False, use_ir_prediction
             _convert_instance(
                 instance, t2l2s, prependlinum=prependlinum, prependtitle=prependtitle, use_ir_prediction=use_ir_prediction, n_sentences=n_sentences))
     
-    
-    print("evaluating dependency...")
-    with torch.no_grad():
-        if num_samples is None:
-            num_samples = len(converted_instances)
-        # for i in tqdm(range(0, num_samples, depparse_batch_size)):
-        for i in tqdm(range(0, 1000, depparse_batch_size)):
-            nlp_input = ""
-            n_sent = 0
-            for j in range(i, min(len(converted_instances), i+depparse_batch_size)):
-                question = converted_instances[j]["sentence2"]
-                support = converted_instances[j]["sentence1"]
-                # print(support, question)
-                converted_instances[j]["q_tokenized"] = pattern.findall(question)
-                converted_instances[j]["s_tokenized"] = pattern.findall(support)
-                nlp_input += ((" ".join(converted_instances[j]["q_tokenized"])) + "\n" + \
-                        " ".join(converted_instances[j]["s_tokenized"])) + "\n"
-                n_sent += 2
-            doc = nlp(nlp_input)
-            # print(len(doc.sentences), n_sent)
-            assert len(doc.sentences) == n_sent
-            for j in range(i, min(len(converted_instances), i+depparse_batch_size)):
-                converted_instances[j]["q_tokenized"] = [t.text for t in doc.sentences[(j-i)*2].tokens]
-                converted_instances[j]["s_tokenized"] = [t.text for t in doc.sentences[(j-i)*2+1].tokens]
-                converted_instances[j]["q_dep_i"] = [None] * (len(converted_instances[j]["q_tokenized"]) - 1)
-                converted_instances[j]["q_dep_j"] = [None] * (len(converted_instances[j]["q_tokenized"]) - 1)
-                converted_instances[j]["q_dep_type"] = [None] * (len(converted_instances[j]["q_tokenized"]) - 1)
-                converted_instances[j]["s_dep_i"] = [None] * (len(converted_instances[j]["s_tokenized"]) - 1)
-                converted_instances[j]["s_dep_j"] = [None] * (len(converted_instances[j]["s_tokenized"]) - 1)
-                converted_instances[j]["s_dep_type"] = [None] * (len(converted_instances[j]["s_tokenized"]) - 1)
+    print("evaluating dependency...", file=sys.stderr)
+    dep_type_invalid_cnt = 0
 
-                idx = 0
-                for d in doc.sentences[(j-i)*2].dependencies:
-                    if d[1] == 'root':
-                        continue
-                    converted_instances[j]["q_dep_i"][idx] = int(d[0].index) - 1
+    if num_samples is None:
+        num_samples = len(converted_instances)
+    for i in tqdm(range(0, num_samples, depparse_batch_size)):
+        nlp_input = ""
+        n_sent = 0
+        for j in range(i, min(len(converted_instances), i+depparse_batch_size)):
+            question = converted_instances[j]["sentence2"]
+            support = converted_instances[j]["sentence1"]
+            converted_instances[j]["q_tokenized"] = pattern.findall(question)
+            converted_instances[j]["s_tokenized"] = pattern.findall(support)
+            nlp_input += ((" ".join(converted_instances[j]["q_tokenized"])) + "\n" + \
+                        " ".join(converted_instances[j]["s_tokenized"]) + "\n")
+            n_sent += 2
+        doc = nlp(nlp_input)
+        assert len(doc.sentences) == n_sent
+        for j in range(i, min(len(converted_instances), i + depparse_batch_size)):
+            converted_instances[j]["q_tokenized"] = [t.text for t in doc.sentences[(j-i)*2].tokens]
+            converted_instances[j]["s_tokenized"] = [t.text for t in doc.sentences[(j-i)*2+1].tokens]
+            converted_instances[j]["q_dep_i"] = [None] * (len(converted_instances[j]["q_tokenized"]))
+            converted_instances[j]["q_dep_j"] = [None] * (len(converted_instances[j]["q_tokenized"]))
+            converted_instances[j]["q_dep_type"] = [None] * (len(converted_instances[j]["q_tokenized"]))
+            converted_instances[j]["s_dep_i"] = [None] * (len(converted_instances[j]["s_tokenized"]))
+            converted_instances[j]["s_dep_j"] = [None] * (len(converted_instances[j]["s_tokenized"]))
+            converted_instances[j]["s_dep_type"] = [None] * (len(converted_instances[j]["s_tokenized"]))
+
+            for idx, d in enumerate(doc.sentences[(j-i)*2].dependencies):
+                if type2id.unit2id(d[1]) is None:
+                    dep_type_invalid_cnt += 1
+                    continue
+                if d[1] == 'root':
+                    converted_instances[j]["q_dep_i"][idx] = int(d[2].index) - 1
                     converted_instances[j]["q_dep_j"][idx] = int(d[2].index) - 1
-                    converted_instances[j]["q_dep_type"][idx] = type2id.unit2id(d[1])
-                    idx += 1
-                idx = 0
-                for d in doc.sentences[(j-i)*2+1].dependencies:
-                    if d[1] == 'root':
-                        continue
-                    converted_instances[j]["s_dep_i"][idx] = int(d[0].index) - 1
+                    converted_instances[j]["q_dep_type"][idx] = type2id.unit2id(d[1])    
+                    continue
+                converted_instances[j]["q_dep_i"][idx] = int(d[0].index) - 1
+                converted_instances[j]["q_dep_j"][idx] = int(d[2].index) - 1
+                converted_instances[j]["q_dep_type"][idx] = type2id.unit2id(d[1])
+                idx += 1
+            idx = 0
+            for idx, d in enumerate(doc.sentences[(j-i)*2+1].dependencies):
+                if type2id.unit2id(d[1]) is None:
+                    dep_type_invalid_cnt += 1
+                    continue
+                if d[1] == 'root':
+                    converted_instances[j]["s_dep_i"][idx] = int(d[2].index) - 1
                     converted_instances[j]["s_dep_j"][idx] = int(d[2].index) - 1
                     converted_instances[j]["s_dep_type"][idx] = type2id.unit2id(d[1])
-                    idx += 1
+                    continue
+                converted_instances[j]["s_dep_i"][idx] = int(d[0].index) - 1
+                converted_instances[j]["s_dep_j"][idx] = int(d[2].index) - 1
+                converted_instances[j]["s_dep_type"][idx] = type2id.unit2id(d[1])
+                idx += 1
+    
+    print('Number of invalid dependency type', dep_type_invalid_cnt, file=sys.stderr)
 
 
     return converted_instances
@@ -262,13 +273,13 @@ if __name__ == "__main__":
     parser.add_argument("--prependlinum", action="store_true")
     parser.add_argument("--prependtitle", action="store_true")
     parser.add_argument("--convert_test", action="store_true")
-    parser.add_argument("--depparse_batch_size", default=12, type=int)
+    parser.add_argument("--depparse_batch_size", default=6, type=int)
     parser.add_argument("--num_samples", default=None, type=int)
     # parser.add_argument("--testset", help="turn on when you convert test data", action="store_true")
     args = parser.parse_args()
     print(args)
 
-    nlp = stanfordnlp.Pipeline(tokenize_pretokenized=True, use_gpu=False)
+    nlp = stanfordnlp.Pipeline(tokenize_pretokenized=True)
     type2id = nlp.processors['depparse'].trainer.vocab['deprel']
     pattern = re.compile('\w+|[^\w\s]')
 

@@ -128,7 +128,7 @@ def line_ir(data=list(),docs=dict(),lines=dict(),best=5,model=None):
     Returns a dictionary of n best lines for each claim.
     """
     evidence=dict()
-    data = data[0]
+    # data = data[0] # This line for small dataset only
     for example in tqdm(data):
         cid=example["id"]
         evidence[cid]=list()

@@ -1,0 +1,30 @@
+{
+    "parent_config": "configs/base_config.json",
+    "__description": "train on snli data",
+    "__variables": {
+      "___root_dir___": "/scratch/fz758/ucl",
+      "___train_rte___": "___save_dir___",
+      "___inference_rte___": "___save_dir___",
+      "___aggregator___": "___save_dir___",
+      "___score___": "___save_dir___",
+      "___reader___": "reader",
+      "___rerank___": "___save_dir___",
+      "___save_dir___": "esimsa",
+      "___model_name___": "pytorch_esimsa"
+    },
+    "train_rte": {
+      "jack_config_file": "___root_dir___/jack/conf/nli/snli/___model_name___.yaml",
+      "load_dir": "esim_snli",
+      "save_dir": "___root_dir___/snli/results/___train_rte___/___reader___",
+      "train_file": {
+        "__overwrite": "convert train_converted_file"
+      },
+      "dev_file": {
+        "__overwrite": "convert dev_converted_file"
+      }
+    },
+    "inference_rte": {
+      "batch_size": 1024
+    }
+  }
+  

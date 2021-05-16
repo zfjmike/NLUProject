@@ -37,7 +37,7 @@ def feverpredictions(data,evidence):
 
 def tofeverformat(data,docs,evidence):
     data2=data.copy()
-    data2 = data2[0]
+    # data2 = data2[0] # This line for small dataset only
     for instance in data2:
         cid=instance["id"]
         instance["predicted_pages"]=list()
@@ -65,18 +65,22 @@ if __name__=="__main__":
     parser.add_argument("--dev_input")
     parser.add_argument("--train_output")
     parser.add_argument("--dev_output")
+    parser.add_argument("--test_input")
+    parser.add_argument("--test_output")
     parser.add_argument("--n_docs", type=int, default=5, help="how many documents to retrieve")
     parser.add_argument("--n_sents", type=int, default=5, help="how many setences to retrieve")
     args = parser.parse_args()
     print(args)
 
-    train, dev = load_paper_dataset(train=args.train_input, dev=args.dev_input)
+    train, dev, test = load_paper_dataset(train=args.train_input, dev=args.dev_input, test=args.test_input)
     # train, dev = load_split_trainset(9999)
-    for split,data in [("train",train), ("dev",dev)]:
+    for split,data in [("train",train), ("dev",dev), ("test", test)]:
         if split == "train":
             out_file = args.train_output
-        if split == "dev":
+        elif split == "dev":
             out_file = args.dev_output
+        elif split == "test":
+            out_file = args.test_output
         if os.path.exists(out_file):
             print("file {} exists. skipping ir...".format(out_file))
             continue

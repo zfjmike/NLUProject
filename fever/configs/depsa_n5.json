@@ -9,20 +9,21 @@
     "___score___": "___save_dir___",
     "___reader___": "reader",
     "___rerank___": "___save_dir___",
-    "___save_dir___": "depsa_10k_n5",
+    "___save_dir___": "depsa_n5",
     "___model_name___": "pytorch_depsa_esim"
   },
   "ir": {
-    "train_output_file": "___root_dir___/fever/data/indexed_data/train+dev+test.10k.n5.jsonl",
-    "dev_output_file": "___root_dir___/fever/data/indexed_data/test.10k.n5.jsonl",
-    "test_output_file": "___root_dir___/fever/data/indexed_data/shared_task_test.n5.jsonl",
-    "train_input_file": "___root_dir___/fever/data/train_10k.jsonl",
-    "dev_input_file": "___root_dir___/fever/data/dev_10k.jsonl",
-    "test_input_file": "___root_dir___/fever/data/test.jsonl"
+    "train_output_file": "___root_dir___/fever/data/indexed_data/train.n5.jsonl",
+    "dev_output_file": "___root_dir___/fever/data/indexed_data/dev.n5.jsonl",
+    "test_output_file": "___root_dir___/fever/data/indexed_data/test.n5.jsonl",
+    "train_input_file": "___root_dir___/fever/data/train.jsonl",
+    "dev_input_file": "___root_dir___/fever/data/test.jsonl",
+    "test_input_file": "___root_dir___/fever/data/test.jsonl",
+    "n_sentences": 5
   },
   "convert": {
-    "train_converted_file": "___root_dir___/fever/data/converted/train+dev+test.dep.10k.n5.jsonl",
-    "dev_converted_file": "___root_dir___/fever/data/converted/dev.dep.10k.n5.jsonl",
+    "train_converted_file": "___root_dir___/fever/data/converted/train.dep.n5.jsonl",
+    "dev_converted_file": "___root_dir___/fever/data/converted/dev.dep.n5.jsonl",
     "n_sentences": 5,
     "test_input_file": {
       "__overwrite": "ir test_output_file"
@@ -74,7 +75,7 @@
     "predicted_evidence_file": {
       "__overwrite": "ir dev_output_file"
     },
-    "n_sentences": 15,
+    "n_sentences": 5,
     "test_reranked_evidence_file": "___root_dir___/fever/results/___rerank___/test_reranked_evidences.jsonl",
     "test_predicted_labels_and_scores_file": {
       "__overwrite": "inference_rte test_predicted_labels_and_scores_file"
@@ -90,7 +91,7 @@
     "predicted_evidence_file": {
       "__overwrite": "rerank reranked_evidence_file"
     },
-    "actual_file": "___root_dir___/fever/data/indexed_data/shared_task_test.n5.jsonl",
+    "actual_file": "___root_dir___/fever/data/indexed_data/test.n5.jsonl",
     "test": {
       "predicted_evidence_file": {
         "__overwrite": "rerank test_reranked_evidence_file"

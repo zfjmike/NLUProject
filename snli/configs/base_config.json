@@ -1,0 +1,70 @@
+{
+  "__variables": {
+    "___root_dir___": "/scratch/fz758/ucl",
+    "___train_rte___": "base",
+    "___inference_rte___": "base",
+    "___aggregator___": "base",
+    "___score___": "base",
+    "___reader___": "reader"
+  },
+  "convert": {
+    "train_input_file": "___root_dir___/snli/data/SNLI/snli_1.0/snli_1.0_train.jsonl",
+    "train_converted_file": "___root_dir___/snli/data/SNLI/converted/train.dep.jsonl",
+    "dev_input_file": "___root_dir___/snli/data/SNLI/snli_1.0/snli_1.0_dev.jsonl",
+    "dev_converted_file": "___root_dir___/snli/data/SNLI/converted/dev.dep.jsonl",
+    "test_input_file": "___root_dir___/snli/data/SNLI/snli_1.0/snli_1.0_test.jsonl",
+    "test_converted_file": "___root_dir___/snli/data/SNLI/converted/test.dep.jsonl"
+  },
+  "train_rte": {
+    "jack_config_file": "___root_dir___/jack/conf/nli/snli/esim.yaml",
+    "load_dir": "esim_snli",
+    "save_dir": "___root_dir___/snli/results/___train_rte___/___reader___",
+    "train_file": {
+      "__overwrite": "convert train_converted_file"
+    },
+    "dev_file": {
+      "__overwrite": "convert dev_converted_file"
+    }
+  },
+  "inference_rte": {
+    "train_input_file": {
+      "__overwrite": "convert train_converted_file"
+    },
+    "dev_input_file": {
+      "__overwrite": "convert dev_converted_file"
+    },
+    "test_input_file": {
+      "__overwrite": "convert test_converted_file"
+    },
+    "saved_reader": {
+      "__overwrite": "train_rte save_dir"
+    },
+    "batch_size": 32,
+    "preprocessed_train_input_file": {
+      "__overwrite": "convert train_converted_file"
+    },
+    "preprocessed_dev_input_file": {
+      "__overwrite": "convert dev_converted_file"
+    },
+    "preprocessed_test_input_file": {
+      "__overwrite": "convert test_converted_file"
+    },
+    "train_predicted_labels_and_scores_file": "___root_dir___/snli/results/___inference_rte___/train.predictions.jsonl",
+    "dev_predicted_labels_and_scores_file": "___root_dir___/snli/results/___inference_rte___/dev.predictions.jsonl",
+    "test_predicted_labels_and_scores_file": "___root_dir___/snli/results/___inference_rte___/test.predictions.jsonl"
+  },
+  "score": {
+    "train_prediction_file": {
+      "__overwrite": "inference_rte train_predicted_labels_and_scores_file"
+    },
+    "dev_prediction_file": {
+      "__overwrite": "inference_rte dev_predicted_labels_and_scores_file"
+    },
+    "test_prediction_file": {
+      "__overwrite": "inference_rte test_predicted_labels_and_scores_file"
+    },
+    "train_score_file": "___root_dir___/snli/results/___score___/train_score.jsonl",
+    "dev_score_file": "___root_dir___/snli/results/___score___/dev_score.jsonl",
+    "test_score_file": "___root_dir___/snli/results/___score___/test_score.jsonl"
+  }
+}

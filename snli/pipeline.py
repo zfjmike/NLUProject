@@ -32,35 +32,12 @@ def save_config(config, path):
         json.dump(config, f)
 
 
-def ir(ir_config):
-    options = list()
-    options.extend(["--train_input", ir_config["train_input_file"]])
-    options.extend(["--dev_input", ir_config["dev_input_file"]])
-    options.extend(["--train_output", ir_config["train_output_file"]])
-    options.extend(["--dev_output", ir_config["dev_output_file"]])
-    options.extend(["--test_input", ir_config["test_input_file"]])
-    options.extend(["--test_output", ir_config["test_output_file"]])
-    options.extend(["--n_docs", str(ir_config["n_pages"])])
-    options.extend(["--n_sents", str(ir_config["n_sentences"])])
-    script = ["get_evidence.py"] + options
-    __run_python(script, gpu=False)
-
-
 def convert(config):
-    options = list()
-    options.append(config["train_input_file"])
-    options.append(config["train_converted_file"])
-    if config["prependtitle"]:
-        options.append("--prependtitle")
-    if config["prependlinum"]:
-        options.append("--prependlinum")
-    if config["use_ir_pred"]:
-        options.append("--use_ir_pred")
-    if config["n_sentences"]:
-        options.extend(["--n_sentences", str(config["n_sentences"])])
-
     # train data
     if not os.path.exists(config["train_converted_file"]):
+        options = list()
+        options.append(config["train_input_file"])
+        options.append(config["train_converted_file"])
         script = ["converter.py"] + options
         __run_python(script, gpu=False, env={"PYTHONPATH": "."})
     else:
@@ -68,8 +45,9 @@ def convert(config):
 
     # dev data
     if not os.path.exists(config["dev_converted_file"]):
-        options[0] = config["dev_input_file"]
-        options[1] = config["dev_converted_file"]
+        options = list()
+        options.append(config["dev_input_file"])
+        options.append(config["dev_converted_file"])
         script = ["converter.py"] + options
         __run_python(script, gpu=False, env={"PYTHONPATH": "."})
     else:
@@ -77,8 +55,9 @@ def convert(config):
 
     # test data
     if ("test_converted_file" in config) and (not os.path.exists(config["test_converted_file"])):
-        options[0] = config["test_input_file"]
-        options[1] = config["test_converted_file"]
+        options = list()
+        options.append(config["test_input_file"])
+        options.append(config["test_converted_file"])
         script = ["converter.py"] + options
         __run_python(script, gpu=False, env={"PYTHONPATH": "."})
     else:
@@ -94,13 +73,12 @@ def train_rte(config):
     options.append("save_dir={}".format(config["save_dir"]))
     options.append("train={}".format(config["train_file"]))
     options.append("dev={}".format(config["dev_file"]))
-    options.append("test={}".format(config["dev_file"]))
     if "load_dir" in config and config["load_dir"] != "":
         options.append("load_dir={}".format(config["load_dir"]))
 
     script = ["bin/jack-train.py"] + options
     __run_python(script, gpu=True, env={"PYTHONPATH": "."})
-    os.chdir("../fever")
+    os.chdir("../snli")
 
 
 def inference_rte(config):
@@ -109,12 +87,6 @@ def inference_rte(config):
     options.append(config["train_input_file"])  # input file
     options.append(config["train_predicted_labels_and_scores_file"])
     options.extend(["--saved_reader", config["saved_reader"]])
-    if config["prependlinum"]:
-        options.append("--prependlinum")
-    if config["prependtitle"]:
-        options.append("--prependtitle")
-    if config["n_sentences"]:
-        options.extend(["--n_sentences", str(config["n_sentences"])])
     if config["batch_size"]:
         options.extend(["--batch_size", str(config["batch_size"])])
 
@@ -124,7 +96,7 @@ def inference_rte(config):
         if "preprocessed_train_input_file" in config:
             options_train.extend(["--preprocessed_in_file", 
                 config["preprocessed_train_input_file"]])
-        script = ["../fever/jack_reader.py"] + options_train
+        script = ["../snli/jack_reader.py"] + options_train
         __run_python(script, gpu=True, env={"PYTHONPATH": "."})
     else:
         logger.info("skipping inference rte for train. %s exists", config["train_predicted_labels_and_scores_file"])
@@ -137,7 +109,7 @@ def inference_rte(config):
         if "preprocessed_dev_input_file" in config:
             options_dev.extend(["--preprocessed_in_file",
                 config["preprocessed_dev_input_file"]])
-        script = ["../fever/jack_reader.py"] + options_dev
+        script = ["../snli/jack_reader.py"] + options_dev
         __run_python(script, gpu=True, env={"PYTHONPATH": "."})
     else:
         logger.info("skipping inference rte for dev. %s exists", config["dev_predicted_labels_and_scores_file"])
@@ -150,79 +122,43 @@ def inference_rte(config):
         if "preprocessed_test_input_file" in config:
             options_test.extend(["--preprocessed_in_file",
                 config["preprocessed_test_input_file"]])
-        script = ["../fever/jack_reader.py"] + options_test
+        script = ["../snli/jack_reader.py"] + options_test
         __run_python(script, gpu=True, env={"PYTHONPATH": "."})
     else:
         logger.info("skipping inference rte for test. %s exists", config["test_predicted_labels_and_scores_file"])
+    os.chdir("../snli")
 
-def neural_aggregator(config):
-    os.chdir(os.path.join(root_dir, "fever"))
-    options = list()
-    options.extend(["--train", config["train_file"]])
-    options.extend(["--dev", config["dev_file"]])
-    options.extend(["--test", config["test_file"]])
-    options.extend(["--epochs", str(config["epochs"])])
-    options.extend(["--predicted_labels", config["predicted_labels_file"]])
-    options.extend(["--test_predicted_labels", config["test_predicted_labels_file"]])
-    options.extend(["--n_sentences", str(config["n_sentences"])])
-    layers = [str(num) for num in config["layers"]]
-    options.extend(["--layers"] + layers)
-    if "sampling" in config and config["sampling"]:
-        options.append("--sampling")
-    if "ev_scores" in config and config["ev_scores"]:
-        options.append("--ev_scores")
-
-    script = ["neural_aggregator.py"] + options
-    __run_python(script, gpu=False)
-
-
-def rerank(config):
-    logger.info("running reranking for dev set")
-    options = list()
-    options.extend(["--rte_predictions", config["predicted_labels_and_scores_file"]])
-    options.extend(["--aggregated_labels", config["predicted_labels_file"]])
-    options.extend(["--predicted_evidences", config["predicted_evidence_file"]])
-    options.extend(["--reranked_evidences", config["reranked_evidence_file"]])
-    options.extend(["--n_sentences", str(config["n_sentences"])])
-
-    script = ["rerank.py"] + options
-    __run_python(script, gpu=False)
-
-    logger.info("running reranking for test set")
-    options = list()
-    options.extend(["--rte_predictions", config["test_predicted_labels_and_scores_file"]])
-    options.extend(["--aggregated_labels", config["test_predicted_labels_file"]])
-    options.extend(["--predicted_evidences", config["test_predicted_evidence_file"]])
-    options.extend(["--reranked_evidences", config["test_reranked_evidence_file"]])
-    options.extend(["--n_sentences", str(config["n_sentences"])])
-
-    script = ["rerank.py"] + options
-    __run_python(script, gpu=False)
 
 def score(config):
-    os.chdir(os.path.join(root_dir, "fever-baselines"))
-    options = list()
-    options.extend(["--predicted_labels", config["predicted_labels_file"]])
-    options.extend(["--predicted_evidence", config["predicted_evidence_file"]])
-    options.extend(["--actual", config["actual_file"]])
-    options.extend(["--score_file", config["score_file"]])
-    options.extend(["--submission_file", config["submission_file"]])
-
-    script = ["src/scripts/score.py"] + options
-    __run_python(script, gpu=False, env={"PYTHONPATH": "src:../fever"})
-
-
-    if "test" in config and config["test"]:
+    if not os.path.exists(config["train_score_file"]):
         options = list()
-        options.extend(["--predicted_labels", config["test"]["predicted_labels_file"]])
-        options.extend(["--predicted_evidence", config["test"]["predicted_evidence_file"]])
-        options.extend(["--actual", config["test"]["actual_file"]])
-        options.extend(["--score_file", config["test"]["score_file"]])
-        options.extend(["--submission_file", config["test"]["submission_file"]])
+        options.extend(["--prediction_file", config["train_prediction_file"]])
+        options.extend(["--score_file", config["train_score_file"]])
 
-        script = ["src/scripts/score.py"] + options + ["--test"]
-        __run_python(script, gpu=False, env={"PYTHONPATH": "src:../fever"})
+        script = ["score.py"] + options
+        __run_python(script, gpu=False, env={"PYTHONPATH": "."})
+    else:
+        logger.info("skipping scoring for train. %s exists", config["train_score_file"])
+    
+    if not os.path.exists(config["dev_score_file"]):
+        options = list()
+        options.extend(["--prediction_file", config["dev_prediction_file"]])
+        options.extend(["--score_file", config["dev_score_file"]])
 
+        script = ["score.py"] + options
+        __run_python(script, gpu=False, env={"PYTHONPATH": "."})
+    else:
+        logger.info("skipping scoring for dev. %s exists", config["dev_score_file"])
+    
+    if not os.path.exists(config["test_score_file"]):
+        options = list()
+        options.extend(["--prediction_file", config["test_prediction_file"]])
+        options.extend(["--score_file", config["test_score_file"]])
+
+        script = ["score.py"] + options
+        __run_python(script, gpu=False, env={"PYTHONPATH": "."})
+    else:
+        logger.info("skipping scoring for test. %s exists", config["test_score_file"])
 
 def __run_python(script, gpu=False, env=dict()):
     ### You might need to add env vars or/and python executables.
@@ -312,18 +248,6 @@ if __name__ == '__main__':
     config = parse(config)
     save_config(config, path=os.path.join(model_dir, "config.json"))
 
-    # perform IR if file doesn't exist
-    config_ir = config["ir"]
-    logger.info("%s exists?: %s", config_ir["train_output_file"], os.path.exists(config_ir["train_output_file"]))
-    logger.info("%s exists?: %s", config_ir["dev_output_file"], os.path.exists(config_ir["dev_output_file"]))
-    logger.info("%s exists?: %s", config_ir["test_output_file"], os.path.exists(config_ir["test_output_file"]))
-    if not (os.path.exists(config_ir["train_output_file"])
-            and os.path.exists(config_ir["dev_output_file"])
-            and os.path.exists(config_ir["test_output_file"])):
-        ir(config["ir"])
-    else:
-        logger.info("skipping ir...")
-
     # convert format if file does not exist
     conf_convert = config["convert"]
     logger.info("%s exists?: %s", conf_convert["train_converted_file"], os.path.exists(conf_convert["train_converted_file"]))
@@ -355,30 +279,24 @@ if __name__ == '__main__':
     logger.info("%s exists?: %s", conf_inference["train_predicted_labels_and_scores_file"], os.path.exists(conf_inference["train_predicted_labels_and_scores_file"]))
     logger.info("%s exists?: %s", conf_inference["dev_predicted_labels_and_scores_file"], os.path.exists(conf_inference["dev_predicted_labels_and_scores_file"]))
     logger.info("%s exists?: %s", conf_inference["test_predicted_labels_and_scores_file"], os.path.exists(conf_inference["test_predicted_labels_and_scores_file"]))
-    if exec_flag or (not os.path.exists(
-            conf_inference["train_predicted_labels_and_scores_file"]) or not os.path.exists(conf_inference["dev_predicted_labels_and_scores_file"]) or not os.path.exists(conf_inference["test_predicted_labels_and_scores_file"])):
+    if exec_flag or (
+        not os.path.exists(conf_inference["train_predicted_labels_and_scores_file"]) or 
+        not os.path.exists(conf_inference["dev_predicted_labels_and_scores_file"]) or 
+        not os.path.exists(conf_inference["test_predicted_labels_and_scores_file"])):
         inference_rte(config["inference_rte"])
         exec_flag = True
     else:
         logger.info("skipping inference rte...")
 
-    # aggregation if file not exists
-    if exec_flag or (not os.path.exists(config["aggregator"]["predicted_labels_file"])):
-        neural_aggregator(config["aggregator"])
-        exec_flag = True
-    else:
-        logger.info("skipping aggregation...")
-
-    if "rerank" in config and (exec_flag or not os.path.exists(config["rerank"]["reranked_evidence_file"])):
-        rerank(config["rerank"])
-        exec_flag = True
-    else:
-        if "rerank" in config:
-            logger.info("skipping rerank... %s exists.", config["rerank"]["reranked_evidence_file"])
-
     # scoring
-    if exec_flag or (not os.path.exists(config["score"]["score_file"])):
-        score(config["score"])
-        exec_flag = True
+    conf_score = config["score"]
+    logger.info("%s exists?: %s", conf_score["train_score_file"], os.path.exists(conf_score["train_score_file"]))
+    logger.info("%s exists?: %s", conf_score["dev_score_file"], os.path.exists(conf_score["dev_score_file"]))
+    logger.info("%s exists?: %s", conf_score["test_score_file"], os.path.exists(conf_score["test_score_file"]))
+    if exec_flag or (
+        not os.path.exists(conf_score["train_score_file"]) or 
+        not os.path.exists(conf_score["dev_score_file"]) or 
+        not os.path.exists(conf_score["test_score_file"])):
+        score(conf_score)
     else:
-        logger.info("skipping score... %s exists.", config["score"]["score_file"])
+        logger.info("skipping score...")
